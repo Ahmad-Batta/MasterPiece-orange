@@ -8,14 +8,21 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\Admin;
 use App\Models\Company;
 use App\Models\Seeker;
+use App\Services\GoogleOAuthState;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Laravel\Socialite\Facades\Socialite;
+use Throwable;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly GoogleOAuthState $googleOAuthState) {}
+
     public function login(LoginRequest $request): JsonResponse
     {
         $account = null;
@@ -105,6 +112,92 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function googleRedirect(Request $request): RedirectResponse
+    {
+        $role = $request->query('role', 'seeker');
+        if (! in_array($role, ['seeker', 'company'], true)) {
+            throw ValidationException::withMessages(['role' => ['Role must be seeker or company.']]);
+        }
+
+        $state = $this->googleOAuthState->issue($role);
+
+        return Socialite::driver('google')->stateless()->with(['state' => $state])->redirect();
+    }
+
+    public function googleCallback(Request $request): JsonResponse|RedirectResponse
+    {
+        $frontendUrl = rtrim((string) config('services.frontend_url', 'http://localhost:5173'), '/');
+
+        try {
+            $role = $this->googleOAuthState->resolve((string) $request->query('state', ''));
+            $googleUser = Socialite::driver('google')->stateless()->user();
+            $email = strtolower(trim((string) $googleUser->getEmail()));
+            $name = trim((string) $googleUser->getName());
+
+            if (! filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 255) {
+                throw new \RuntimeException('Google did not provide a valid email address.');
+            }
+            if (array_key_exists('verified_email', $googleUser->user) && ! $googleUser->user['verified_email']) {
+                throw new \RuntimeException('The Google email address is not verified.');
+            }
+
+            $account = null;
+            foreach ([Admin::class, Seeker::class, Company::class] as $modelClass) {
+                $candidate = $modelClass::query()->where('email', $email)->first();
+                if ($candidate) {
+                    $account = $candidate;
+                    break;
+                }
+            }
+
+            if ($account && ! $account->is_active) {
+                throw new \RuntimeException('This account is inactive.');
+            }
+
+            if (! $account) {
+                $account = $this->createGoogleAccount($role, $email, $name !== '' ? $name : strstr($email, '@', true));
+            } else {
+                $role = match (true) {
+                    $account instanceof Admin => 'admin',
+                    $account instanceof Company => 'company',
+                    default => 'seeker',
+                };
+            }
+
+            $token = $account->createToken('careerhub-google', ['role:'.$role])->plainTextToken;
+            $payload = [
+                'token' => $token,
+                'role' => $role,
+                'user' => $this->presentUser($account, $role),
+            ];
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Google login successful.',
+                    'data' => $payload,
+                ]);
+            }
+
+            return redirect()->away($frontendUrl.'/auth/callback?'.http_build_query([
+                'token' => $token,
+                'role' => $role,
+            ]));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Google authentication failed.',
+                    'errors' => [],
+                ], 401);
+            }
+
+            return redirect()->away($frontendUrl.'/auth/callback?error=google_auth_failed');
+        }
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()?->delete();
@@ -148,5 +241,36 @@ class AuthController extends Controller
             'name' => $name,
             'email' => $account->email,
         ];
+    }
+
+    private function createGoogleAccount(string $role, string $email, string $name): Model
+    {
+        $parts = preg_split('/\s+/', trim($name), 2) ?: [$name];
+
+        if ($role === 'company') {
+            return Company::query()->create([
+                'company_name' => Str::limit($name, 255, ''),
+                'industry' => 'Not specified',
+                'description' => '',
+                'location' => 'Not specified',
+                'email' => $email,
+                'password' => Str::random(80),
+            ]);
+        }
+
+        return Seeker::query()->create([
+            'first name' => Str::limit($parts[0] ?: strstr($email, '@', true), 50, ''),
+            'last name' => Str::limit($parts[1] ?? '', 50, ''),
+            'email' => $email,
+            'hashed password' => '',
+            'password' => Str::random(80),
+            'headline' => '',
+            'biography' => '',
+            'resume url' => '',
+            'linkedIn url' => '',
+            'skills' => '[]',
+            'location' => '',
+            'major' => '',
+        ]);
     }
 }

@@ -16,6 +16,7 @@
 - Keep AI analysis behind a service boundary, validate structured Groq responses, and persist/cache reports to avoid redundant requests.
 - Never place a real `GROQ_API_KEY` in tracked files. Read it from environment configuration and keep a no-key/timeout fallback that preserves the API report schema.
 - Keep API payloads aligned with `API_CONTRACT.md`; preserve the shared success/error JSON envelope.
+- Google OAuth must remain stateless and validate its encrypted, expiring role state before using it; keep Google credentials in environment variables and limit CORS to the configured frontend origin.
 - Store uploaded resumes on the private local disk only, validate PDF/DOCX MIME and size, and avoid returning parsed CV text in API responses.
 
 ## UI and UX Requirements

@@ -52,6 +52,13 @@ Success returns HTTP `201` with `{ "status": "success", "message": "...", "data"
 - `GET /api/me` returns `{ "role": "seeker | company | admin", "user": { "id": 1, "name": "...", "email": "..." } }` inside `data`.
 - Protected routes require `Authorization: Bearer <token>` and the matching account role.
 
+### Google OAuth
+
+- `GET /api/auth/google/redirect` redirects to Google's consent screen. Optional query parameter `role` accepts `seeker` or `company`; it defaults to `seeker` for new accounts. The role is carried in encrypted, expiring OAuth state.
+- `GET /api/auth/google/callback` uses the existing account and its role when Google's email already exists. Otherwise, it creates a seeker or company according to the state role. Existing inactive accounts are rejected.
+- With `Accept: application/json`, callback success returns the standard success envelope containing `token`, `role`, and `user`. Browser callbacks redirect to `${FRONTEND_URL}/auth/callback?token=...&role=...`.
+- Configure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and `FRONTEND_URL` in `.env`. The local CORS origin is `http://localhost:5173` by default.
+
 ## 2. Seeker APIs
 
 - `GET /api/seeker/profile` returns the current profile and a dynamically calculated `profile_strength` from 0 to 100.

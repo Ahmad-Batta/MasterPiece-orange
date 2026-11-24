@@ -33,6 +33,7 @@ Eloquent models explicitly map the existing non-standard table names, primary ke
 - **Unified Single Login Page:** Provide **one single unified `/login` page** for all user types (`Seeker`, `Company`, and `Admin`) requiring only `email` and `password` (plus optional Google OAuth), with no role selector on the login screen.
 - **Automatic Role Detection & Redirection:** On `POST /api/login`, `AuthenticationManager` checks credentials across `admin`, `seeker`, and `companies` tables, verifies the BCrypt password, issues a role-scoped Sanctum token, and returns `{ status, data: { token, role, user } }`. The React frontend automatically redirects the user to the appropriate dashboard (`/seeker/dashboard`, `/company/dashboard`, or `/admin/dashboard`) based on `role`.
 - **Registration & Uniqueness:** Public registration (`/register`) supports creating `Seeker` or `Company` accounts (while `Admin` accounts are seeded). Enforce global email uniqueness across `admin`, `seeker`, and `companies` during registration.
+- **Google OAuth:** Provide stateless `GET /api/auth/google/redirect` and `GET /api/auth/google/callback` endpoints using Laravel Socialite. New Google accounts default to `seeker`; `?role=company` registers a company. Existing emails sign in using their existing role. Issue Sanctum tokens and redirect to the frontend callback or return the API envelope for JSON clients.
 - **Authorization:** Strict Role-Based Access Control (RBAC) middleware protecting Seeker, Company, and Admin API endpoints.
 
 ### 4.2 Job Seeker Features (`CandidateService`)

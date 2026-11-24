@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::post('/register', [AuthController::class, 'register'])->name('api.register');
+Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->name('api.auth.google.redirect');
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('api.auth.google.callback');
 Route::get('/jobs', [JobController::class, 'index'])->name('api.jobs.index');
 
 Route::middleware('auth:sanctum')->group(function (): void {
