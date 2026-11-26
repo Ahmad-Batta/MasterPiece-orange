@@ -35,6 +35,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/profile', [CandidateController::class, 'profile']);
             Route::put('/profile', [CandidateController::class, 'updateProfile']);
             Route::post('/cv', [CandidateController::class, 'uploadResume']);
+            Route::post('/cv/auto-fill', [CandidateController::class, 'autoFillCv']);
+            Route::post('/cv/generate', [CandidateController::class, 'generateCv']);
+            Route::get('/cv/download', [CandidateController::class, 'downloadCv'])->name('api.seeker.cv.download');
             Route::get('/recommendations', [CandidateController::class, 'recommendations']);
             Route::get('/applications', [CandidateController::class, 'applications']);
         });

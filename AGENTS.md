@@ -21,6 +21,9 @@
 - Keep API payloads aligned with `API_CONTRACT.md`; preserve the shared success/error JSON envelope.
 - Google OAuth must remain stateless and validate its encrypted, expiring role state before using it; keep Google credentials in environment variables and limit CORS to the configured frontend origin.
 - Store uploaded resumes on the private local disk only, validate PDF/DOCX MIME and size, and avoid returning parsed CV text in API responses.
+- Seeker CV onboarding supports quota-free `POST /api/seeker/cv/auto-fill`; keep Groq extraction separate from paid job-match analysis and preserve a local fallback when the key or service is unavailable.
+- Structured CV fields (`phone`, `city`, `linkedin_url`, `github_url`, `education`, `experience`, `projects`, `skills_grouped`) are added through guarded additive migrations only. Keep old rows and legacy columns intact.
+- `POST /api/seeker/cv/generate` creates the custom academic A4 PDF using `resources/views/pdf/cv-template.blade.php`; PDFs remain private, and `GET /api/seeker/cv/download` must only serve the authenticated seeker's active generated CV.
 
 ## UI and UX Requirements
 - Read and follow `UI_UX_RULES.md` for every page and component. Its palette, spacing, typography, component styling, responsive behavior, and interaction states are mandatory.

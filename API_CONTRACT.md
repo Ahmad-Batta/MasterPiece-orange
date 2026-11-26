@@ -148,3 +148,13 @@ When the free quota is exhausted, an uncached AI request returns HTTP `402`:
 - `GET /api/payments/history` returns only the authenticated seeker's or company's paginated payment history.
 - `GET /api/admin/payments` (admin only) returns paginated transactions. Optional filters: `status=pending|paid|failed`, `per_page=1..100`.
 - Configure `STRIPE_KEY`, `STRIPE_SECRET`, and `STRIPE_WEBHOOK_SECRET` in `.env`. Never commit live credentials.
+
+## 8. Seeker CV Onboarding and Builder
+
+CV files are stored on the private local disk. Parsed resume text remains private and is never included in API responses.
+
+- `POST /api/seeker/cv/auto-fill` accepts `multipart/form-data` with `resume` (PDF or DOCX, maximum 10 MB). The server extracts text, requests structured profile details from Groq using `openai/gpt-oss-20b` when configured, and saves the fields. This onboarding extraction does not use or decrement paid AI analysis quota. If Groq is unavailable, the endpoint uses existing profile values and safe local text extraction as a fallback. Success returns the updated seeker profile, including `phone`, `city`, `linkedin_url`, `github_url`, `education`, `skills_grouped`, `experience`, `projects`, and recalculated `profile_strength`; it omits `parsed_cv_text`.
+- `POST /api/seeker/cv/generate` accepts JSON structured CV fields: `bio`, `phone`, `city`, `linkedin_url`, `github_url`, `education[]`, `skills_grouped[]`, `experience[]`, and `projects[]`. It saves those fields, generates a private A4 PDF, updates the active CV path, parsed text, and profile strength, and returns `{ "profile": { ... }, "download_url": "..." }` inside `data`.
+- `GET /api/seeker/cv/download` streams the current generated PDF for the authenticated seeker. It returns `404` when no active generated PDF exists.
+
+An additive migration adds nullable `phone`, `city`, `linkedin_url`, `github_url`, and JSON `education`, `experience`, `projects`, and `skills_grouped` columns to `seeker`. Existing rows and legacy columns remain intact.
