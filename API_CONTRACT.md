@@ -111,6 +111,7 @@ The persisted and returned evaluation schema is:
 ## 6. Admin APIs
 
 - `GET /api/admin/stats` returns `total_seekers`, `total_companies`, `active_job_posts`, `total_applications`, `average_ai_match_score`, and `recent_activities` (up to 10 newest events, each `{ "type": "application | seeker_registered | company_registered | job_post_published", "occurred_at": "timestamp", "description": "...", "entity_id": 1 }`). Events are sorted newest first.
+- Admin statistics also return `total_revenue`, the sum of paid transaction amounts.
 - `GET /api/admin/verifications` lists pending companies.
 - `PATCH /api/admin/companies/{id}/verify` accepts `{ "verification_status": "verified | unverified" }` for a pending company.
 - `GET /api/admin/users` returns paginated `data.items` and `data.pagination`; supports `search`, `role=seeker|company|admin`, `status=active|inactive`, and `per_page=1..100`. User summaries never include credentials.
@@ -124,3 +125,26 @@ The persisted and returned evaluation schema is:
 - `GET /api/admin/jobs` returns paginated standard job items and pagination; supports `search`, `category_id`, and `per_page=1..100`. `POST /api/admin/jobs` requires `company_id`, `category_id`, `title`, `description`, `location`, and `job_type`, with optional `required_skills` array. `PUT|PATCH /api/admin/jobs/{id}` accepts those fields optionally. `DELETE /api/admin/jobs/{id}` deletes an unreferenced job or returns `409` if applications, matches, or job posts reference it.
 
 All paginated admin list endpoints return `{ "items": [], "pagination": { "current_page": 1, "last_page": 1, "per_page": 25, "total": 0 } }` inside the standard `data` envelope.
+
+## 7. Freemium Plans & Payments
+
+Seeker and company profile responses include `plan`, `plan_expires_at`, and `free_ai_uses_remaining`. Accounts start on `free` with one AI use. Active Pro accounts have `plan=pro` and a future `plan_expires_at`; Pro permits unlimited new analyses. Cached AI reports do not consume quota.
+
+When the free quota is exhausted, an uncached AI request returns HTTP `402`:
+
+```json
+{
+  "status": "error",
+  "code": "AI_QUOTA_EXCEEDED",
+  "message": "Your free AI uses are finished. Choose a Pro plan to continue.",
+  "errors": { "upgrade_plans": [{ "id": 1, "name": "Seeker Pro", "slug": "seeker-pro", "price": "9.99", "currency": "USD", "duration_days": 30, "features": [] }] }
+}
+```
+
+- `GET /api/plans?role=seeker|company` returns active plans for the requested role in `data.items`.
+- `POST /api/payments/checkout` (authenticated seeker/company) accepts `{ "plan_id": 1 }`. It creates a pending payment and returns `payment_id`, `status`, `gateway`, `checkout_url`, and `publishable_key`. With `STRIPE_SECRET`, it creates a Stripe Checkout Session; with a blank secret, it returns the authenticated demo checkout route.
+- `GET /api/payments/demo-checkout/{paymentId}` returns plan/amount details and the confirmation method/URL for the owning account. `POST /api/payments/demo-confirm/{paymentId}` confirms only pending demo payments in local/testing environments when the Stripe secret is blank.
+- `POST /api/payments/webhook` requires Stripe's `Stripe-Signature` header. Signed successful Checkout events must match a payment's session ID, amount, currency, and paid state before Pro activation; expired or failed Checkout events mark matching pending transactions as failed. Repeated events are idempotent.
+- `GET /api/payments/history` returns only the authenticated seeker's or company's paginated payment history.
+- `GET /api/admin/payments` (admin only) returns paginated transactions. Optional filters: `status=pending|paid|failed`, `per_page=1..100`.
+- Configure `STRIPE_KEY`, `STRIPE_SECRET`, and `STRIPE_WEBHOOK_SECRET` in `.env`. Never commit live credentials.

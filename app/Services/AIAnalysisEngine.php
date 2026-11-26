@@ -10,7 +10,10 @@ use Throwable;
 
 class AIAnalysisEngine
 {
-    public function __construct(private readonly JobService $jobService) {}
+    public function __construct(
+        private readonly JobService $jobService,
+        private readonly AIQuotaService $quotaService,
+    ) {}
 
     /** @return array{match_percentage:int, strengths:list<string>, weaknesses:list<string>, interview_questions:list<string>} */
     public function analyze(Seeker $seeker, JobPost $post, bool $refresh = false): array
@@ -29,6 +32,8 @@ class AIAnalysisEngine
                 return $cached;
             }
         }
+
+        $this->quotaService->consumeForAnalysis($seeker);
 
         $report = $this->requestGroq($seeker, $post);
         if ($report === null) {

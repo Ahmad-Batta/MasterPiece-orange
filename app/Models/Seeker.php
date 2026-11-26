@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -21,6 +22,7 @@ class Seeker extends Authenticatable
         'first name', 'last name', 'email', 'hashed password', 'password', 'headline',
         'biography', 'resume url', 'linkedIn url', 'skills', 'created at', 'location',
         'major', 'category_id', 'Phone_number', 'cv_path', 'parsed_cv_text', 'profile_strength', 'is_active',
+        'plan', 'plan_expires_at', 'free_ai_uses_remaining',
     ];
 
     protected $hidden = ['password', 'hashed password'];
@@ -34,6 +36,8 @@ class Seeker extends Authenticatable
             'profile_strength' => 'integer',
             'is_active' => 'boolean',
             'password' => 'hashed',
+            'plan_expires_at' => 'datetime',
+            'free_ai_uses_remaining' => 'integer',
         ];
     }
 
@@ -60,5 +64,10 @@ class Seeker extends Authenticatable
     public function matchingJobs(): HasMany
     {
         return $this->hasMany(MatchingJob::class, 'seeker_id', 'seeker_id');
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
     }
 }

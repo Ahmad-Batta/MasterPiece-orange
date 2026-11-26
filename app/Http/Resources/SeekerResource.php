@@ -27,6 +27,9 @@ class SeekerResource extends JsonResource
             'cv_path' => $this->cv_path,
             'has_cv' => filled($this->cv_path),
             'profile_strength' => (int) $this->profile_strength,
+            'plan' => $this->plan ?? 'free',
+            'plan_expires_at' => $this->plan_expires_at,
+            'free_ai_uses_remaining' => (int) $this->free_ai_uses_remaining,
         ];
     }
 

@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(PlansSeeder::class);
+
         Admin::query()->updateOrCreate(
             ['email' => 'admin@careerhub.com'],
             ['username' => 'CAREERhub Admin', 'role' => 'admin', 'password' => 'password'],

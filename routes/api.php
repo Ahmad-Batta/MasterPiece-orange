@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CandidateController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
@@ -12,10 +13,20 @@ Route::post('/register', [AuthController::class, 'register'])->name('api.registe
 Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->name('api.auth.google.redirect');
 Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('api.auth.google.callback');
 Route::get('/jobs', [JobController::class, 'index'])->name('api.jobs.index');
+Route::get('/plans', [PaymentController::class, 'plans'])->name('api.plans.index');
+Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('api.payments.webhook');
+Route::get('/payments/demo-checkout/{paymentId}', [PaymentController::class, 'demoCheckout'])
+    ->middleware('signed')->name('api.payments.demo.checkout');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+
+    Route::middleware('role:seeker,company')->group(function (): void {
+        Route::post('/payments/checkout', [PaymentController::class, 'checkout'])->name('api.payments.checkout');
+        Route::get('/payments/history', [PaymentController::class, 'history'])->name('api.payments.history');
+        Route::post('/payments/demo-confirm/{paymentId}', [PaymentController::class, 'confirmDemo'])->name('api.payments.demo.confirm');
+    });
 
     Route::middleware('role:seeker')->group(function (): void {
         Route::post('/jobs/{id}/apply', [JobController::class, 'apply']);
@@ -43,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     });
 
     Route::middleware('role:admin')->prefix('admin')->group(function (): void {
+        Route::get('/payments', [PaymentController::class, 'adminIndex']);
         Route::get('/stats', [AdminController::class, 'stats']);
         Route::get('/verifications', [AdminController::class, 'verifications']);
         Route::patch('/companies/{id}/verify', [AdminController::class, 'verifyCompany']);

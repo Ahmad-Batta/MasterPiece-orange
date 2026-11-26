@@ -11,15 +11,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserRole
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
-        $allowed = match ($role) {
+        $allowed = collect($roles)->contains(fn (string $role): bool => match ($role) {
             'admin' => $user instanceof Admin,
             'company' => $user instanceof Company,
             'seeker' => $user instanceof Seeker,
             default => false,
-        };
+        });
 
         $inactive = $user && in_array($user->getAttribute('is_active'), [false, 0, '0'], true);
 

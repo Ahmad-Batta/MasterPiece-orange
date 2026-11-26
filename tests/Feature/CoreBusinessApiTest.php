@@ -144,7 +144,8 @@ class CoreBusinessApiTest extends TestCase
         $this->postJson('/api/jobs/'.$post.'/apply')->assertConflict();
         $this->getJson('/api/seeker/applications')->assertOk()->assertJsonPath('data.items.0.status', 'Pending');
         $this->getJson('/api/seeker/recommendations')->assertOk()->assertJsonPath('data.items.0.match_percentage', 88);
-        $this->getJson('/api/seeker/recommendations?refresh=1')->assertOk()->assertJsonPath('data.items.0.job.id', $post);
+        $this->getJson('/api/seeker/recommendations?refresh=1')->assertStatus(402)
+            ->assertJsonPath('code', 'AI_QUOTA_EXCEEDED');
         Http::assertSent(fn ($request): bool => str_contains($request->url(), '/chat/completions') && $request['model'] === 'openai/gpt-oss-20b');
 
         Sanctum::actingAs($company, ['role:company']);

@@ -21,6 +21,9 @@ class CompanyResource extends JsonResource
             'logo_url' => $this->logo_url,
             'verification_status' => $this->verification_status,
             'profile_score' => (int) $this->profile_score,
+            'plan' => $this->plan ?? 'free',
+            'plan_expires_at' => $this->plan_expires_at,
+            'free_ai_uses_remaining' => (int) $this->free_ai_uses_remaining,
         ];
     }
 }

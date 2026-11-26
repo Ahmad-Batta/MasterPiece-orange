@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\Job;
 use App\Models\JobPost;
 use App\Models\MatchingJob;
+use App\Models\Payment;
 use App\Models\Seeker;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -29,6 +30,7 @@ class AdminService
             'active_job_posts' => JobPost::query()->where('status', 'active')->count(),
             'total_applications' => Application::query()->count(),
             'average_ai_match_score' => round((float) $averageMatch, 2),
+            'total_revenue' => number_format((float) Payment::query()->where('status', 'paid')->sum('amount'), 2, '.', ''),
             'recent_activities' => $this->recentActivities(),
         ];
     }
