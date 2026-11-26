@@ -57,7 +57,7 @@ Success returns HTTP `201` with `{ "status": "success", "message": "...", "data"
 - `GET /api/auth/google/redirect` redirects to Google's consent screen. Optional query parameter `role` accepts `seeker` or `company`; it defaults to `seeker` for new accounts. The role is carried in encrypted, expiring OAuth state.
 - `GET /api/auth/google/callback` uses the existing account and its role when Google's email already exists. Otherwise, it creates a seeker or company according to the state role. Existing inactive accounts are rejected.
 - With `Accept: application/json`, callback success returns the standard success envelope containing `token`, `role`, and `user`. Browser callbacks redirect to `${FRONTEND_URL}/auth/callback?token=...&role=...`.
-- Configure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and `FRONTEND_URL` in `.env`. The local CORS origin is `http://localhost:5173` by default.
+- Configure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and `FRONTEND_URL` in `backend/.env`. The local CORS origin is `http://localhost:5173` by default.
 
 ## 2. Seeker APIs
 
@@ -77,7 +77,7 @@ Public endpoint. Optional query parameters: `keyword`, `category_id`, `major`, `
 
 Seeker-only endpoint. The `id` is the `job_posts.post_id`; no request body is required. Success returns HTTP `201` with the application and AI report. A repeated application or a closed job returns HTTP `409`.
 
-Application statuses are `Pending`, `Interview`, and `Rejected`.
+New application statuses are `Applied`, `Shortlisted`, `Interview Scheduled`, `Offered`, and `Rejected`. Existing rows may retain legacy status values; the additive migration does not rewrite them.
 
 ## 4. Company APIs
 
@@ -88,7 +88,7 @@ Application statuses are `Pending`, `Interview`, and `Rejected`.
 - `POST /api/company/jobs` creates a job post. Required: `title`, `content`, and `category_id`. Optional: `location`, `job_type`, `required_skills` (string array), `experience_level`, `salary_min`, `salary_max`, and `status` (`active` or `closed`). Success returns HTTP `201`.
 - `PUT|PATCH /api/company/jobs/{id}` updates an owned post; `DELETE /api/company/jobs/{id}` deletes it when it has no application or match history, otherwise closes it to preserve history.
 - `GET /api/company/jobs/{id}/applicants` returns applicant details and AI evaluation cards, ordered by match score.
-- `PATCH /api/company/applications/{id}/status` accepts `{ "status": "Pending | Interview | Rejected" }` for an application belonging to the company.
+- `PATCH /api/company/applications/{id}/status` accepts `status=Applied|Shortlisted|Interview Scheduled|Offered|Rejected` and optional `interview_date`, `interview_link`, and `company_notes`. `interview_date` is required when status is `Interview Scheduled`; dates must be current or future, and links must be HTTP(S). The update notifies the seeker when the status or interview schedule changes.
 
 ## 5. Groq AI Analysis (`gpt-oss-20b`)
 
@@ -147,7 +147,7 @@ When the free quota is exhausted, an uncached AI request returns HTTP `402`:
 - `POST /api/payments/webhook` requires Stripe's `Stripe-Signature` header. Signed successful Checkout events must match a payment's session ID, amount, currency, and paid state before Pro activation; expired or failed Checkout events mark matching pending transactions as failed. Repeated events are idempotent.
 - `GET /api/payments/history` returns only the authenticated seeker's or company's paginated payment history.
 - `GET /api/admin/payments` (admin only) returns paginated transactions. Optional filters: `status=pending|paid|failed`, `per_page=1..100`.
-- Configure `STRIPE_KEY`, `STRIPE_SECRET`, and `STRIPE_WEBHOOK_SECRET` in `.env`. Never commit live credentials.
+- Configure `STRIPE_KEY`, `STRIPE_SECRET`, and `STRIPE_WEBHOOK_SECRET` in `backend/.env`. Never commit live credentials.
 
 ## 8. Seeker CV Onboarding and Builder
 
@@ -158,3 +158,15 @@ CV files are stored on the private local disk. Parsed resume text remains privat
 - `GET /api/seeker/cv/download` streams the current generated PDF for the authenticated seeker. It returns `404` when no active generated PDF exists.
 
 An additive migration adds nullable `phone`, `city`, `linkedin_url`, `github_url`, and JSON `education`, `experience`, `projects`, and `skills_grouped` columns to `seeker`. Existing rows and legacy columns remain intact.
+
+## 9. AI CV Review, Job Skill Gaps, Saved Jobs, Notifications, and Analytics
+
+- `POST /api/seeker/cv/analyze` reviews the active CV and structured profile. Success `data` contains `{ "ats_readiness_score": 0, "sections": [{ "section": "Skills", "strengths": [], "weaknesses": [] }], "missing_keywords": [], "actionable_edits": [] }`. Groq uses `openai/gpt-oss-20b`; a deterministic fallback is returned if Groq is unavailable. Results are cached by profile content for 30 days. Uncached analyses use the seeker AI quota and return the standard `402` `AI_QUOTA_EXCEEDED` payload after free use is exhausted.
+- `GET /api/jobs/{id}/skill-gap` is seeker-only and compares the profile against that active job post. Success `data` contains `{ "match_percentage": 0, "missing_skills": [], "roadmap": [{ "step": 1, "action": "...", "focus": "..." }], "priority_topics": [] }`; `roadmap` always contains exactly three steps. Results are cached by seeker, job, and profile content; uncached requests use the seeker quota.
+- `POST /api/seeker/jobs/{id}/toggle-save` toggles the seeker's saved-job state and returns `{ "saved": true, "job_post_id": 1 }`. `GET /api/seeker/saved-jobs` returns paginated `data.items` with a `job` summary and `saved_at` timestamp.
+- `GET /api/notifications` returns the authenticated account's paginated notifications and `unread_count`. Each item is `{ "id": 1, "title": "...", "message": "...", "type": "...", "data": {}, "read_at": null, "created_at": "..." }`. `PATCH /api/notifications/{id}/read` marks only the caller's notification read; `PATCH /api/notifications/read-all` marks all of the caller's unread notifications read.
+- A match score of at least 80% on a new application notifies the company. Application status changes and interview scheduling notify the seeker. Notifications are stored in the new polymorphic `notifications` table.
+- `GET /api/company/stats` returns `active_jobs`, `total_applicants`, `shortlisted_count`, `interview_count`, `average_match_percentage`, and chart-ready `applicants_per_job` items (`job_post_id`, `title`, `applicants_count`, `average_match_percentage`).
+- `GET /api/admin/stats` also returns chart-ready `jobs_by_category` (`category_id`, `category`, `count`) and `match_score_distribution` (`range`, `count`) arrays. Score buckets are `0-19`, `20-39`, `40-59`, `60-79`, and `80-100`.
+
+The additive `applications` migration adds nullable `interview_date`, `interview_link`, and `company_notes` columns. New application records start at `Applied`; old application status values remain untouched. New `saved_jobs` and `notifications` tables are created with their indexes and foreign keys where applicable. The backend API contract is complete and ready for React frontend integration.

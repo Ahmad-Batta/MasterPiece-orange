@@ -1,54 +1,75 @@
-# UI/UX Design System & Strict Guardrails
+# CAREERhub UI/UX Design System
 
-You MUST follow every rule in this document across all pages and components. Do NOT improvise colors, spacing, or component styles outside these specifications.
+These rules are mandatory across every frontend page and component. Keep the public app warm, editorial, accessible, and consistent in both English (LTR) and Arabic (RTL). Do not invent additional palettes, spacing scales, or component styles.
 
-## 1. Strict Color System (Zero Deviation)
-- **Primary Brand Color:** `#2B362E` (Deep Forest Charcoal) — Primary buttons, active navigation items, main headings, and key brand elements.
-- **Accent Color:** `#A37E5E` (Warm Bronze) — Highlighted keywords, secondary CTAs, progress bars, AI score rings, and active focus borders.
-- **Canvas Background:** `#FAF9F5` (Warm Alabaster) — Main background for all pages.
-- **Card / Surface Background:** `#FFFFFF` — Elevated cards, modals, dropdowns, and form containers.
-- **Border Color:** `#E5E2DC` (1px solid) — Subtle warm divider for cards, inputs, and tables.
-- **Text Hierarchy:**
-  - Headings: `#1E2620`
-  - Body text: `#4A544D`
-  - Muted / Captions / Placeholders: `#7A827C`
-- **Semantic Status Colors (ONLY for badges/alerts):**
-  - Success / Verified / High Match (≥75%): Text `#15803D`, Bg `#F0FDF4`, Border `#BBF7D0`
-  - Warning / Pending / Medium Match (50–74%): Text `#8E6B4D`, Bg `#F5EFEA`, Border `#E6D7C8`
-  - Error / Rejected / Low Match (<50%): Text `#B91C1C`, Bg `#FEF2F2`, Border `#FECACA`
-- **STRICT PROHIBITION:** Never use default Tailwind `blue-*`, `indigo-*`, `purple-*`, or `gray-*` classes. Use the exact hex palette above.
+## 1. Surface and Color Discipline
 
-## 2. Layout, Grid & Spacing (8pt Grid System)
-- **Spacing Scale:** Every margin, padding, and gap MUST be a multiple of `4px` (`gap-2`, `gap-4`, `gap-6`, `gap-8`, `p-4`, `p-6`, `p-8`). Never use arbitrary pixel values like `mt-[13px]`.
-- **Container Width:** Max content width `max-w-7xl mx-auto` with horizontal padding `px-4 sm:px-6 lg:px-8`.
-- **Whitespace Rule:** Maintain at least `24px` (`gap-6`) between cards and `32px–48px` (`mb-8` to `mb-12`) between major page sections. Never crowd elements.
-- **Card Architecture:** Standardize all cards to `bg-white rounded-xl border border-[#E5E2DC] p-6 shadow-sm`.
+Use the 60-30-10 balance: warm ivory canvas `#FAF9F5` for the page (60%), white surfaces `#FFFFFF` with a subtle `1px solid #E5E2D9` border (30%), and Deep Forest `#2B362E` for the brand, headings, navigation, and primary actions. Body ink is `#1C221E`.
 
-## 3. Typography & Visual Hierarchy
-- **Font Family:** `Plus Jakarta Sans` or `Inter` (loaded cleanly in `index.html`).
-- **Type Scale (Strict):**
-  - Page Hero Title: `text-3xl sm:text-4xl font-bold tracking-tight text-[#1E2620]`
-  - Section Heading (H2): `text-xl sm:text-2xl font-semibold text-[#1E2620]`
-  - Card Title (H3): `text-base sm:text-lg font-semibold text-[#1E2620]`
-  - Body Copy: `text-sm sm:text-base leading-relaxed text-[#4A544D]`
-  - Metadata / Labels / Badges: `text-xs font-medium tracking-wide`
-- **Readability:** Limit paragraph line length to `max-w-prose` (`65ch`) so text blocks never stretch awkwardly across wide screens.
+Warm Bronze `#A37E5E` is the final accent (no more than 10% of a view), reserved for AI highlights, Pro badges, small emphasis, and active focus rings. Use semantic muted tones only inside status pills: success/verified `#15803D` on `#F0FDF4` with `#BBF7D0` border; pending/warning `#8E6B4D` on `#F5EFEA` with `#E6D7C8` border; rejected/error `#B91C1C` on `#FEF2F2` with `#FECACA` border.
 
-## 4. Interactive Elements & Component States
-Every clickable or interactive element MUST define all 4 states:
-1. **Default:** Clear visual affordance (`cursor-pointer`, consistent height `h-10` or `h-11` for buttons and inputs).
-2. **Hover:** Subtle transition (`transition-colors duration-150`), e.g., Primary button `#2B362E` -> `#1F2822`; Secondary button `#A37E5E` -> `#8E6B4D`.
-3. **Focus (Accessibility):** Visible keyboard focus ring (`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2`).
-4. **Disabled / Loading:** `disabled:opacity-50 disabled:cursor-not-allowed`, plus an inline spinner icon during async API calls (prevent double submissions).
+For secondary copy and placeholders, use the body ink at reduced opacity rather than introducing new hex colors.
 
-## 5. Forms & User Input UX
-- **Labels:** Always place visible `<label>` elements above inputs (`mb-1.5 text-sm font-medium text-[#1E2620]`). Never rely solely on placeholders as labels.
-- **Validation:** Show clear inline error messages directly below the invalid field in `#B91C1C` (`text-xs mt-1`), and highlight the input border in `#B91C1C`.
-- **Input Styling:** `w-full h-11 px-3.5 rounded-lg bg-white border border-[#E5E2DC] text-sm text-[#1E2620] focus:border-[#A37E5E]`.
+Never use default Tailwind `blue-*`, `indigo-*`, `purple-*`, or `gray-*` classes. Do not use purple/blue SaaS gradients or heavy shadows. Cards use `bg-white rounded-xl border border-[#E5E2D9] p-6 shadow-sm`; `shadow-sm` is the maximum shadow strength. Prefer color, border, and whitespace over elevation.
 
-## 6. Feedback, Empty States & Responsiveness
-- **Loading States:** Use skeleton placeholders (`animate-pulse bg-[#E5E2DC]/60 rounded-lg`) matching the layout shape instead of blank screens or generic full-page spinners.
-- **Empty States:** Every table or list must handle 0 items gracefully with a centered icon, clear explanation, and one primary action button (`bg-[#2B362E] text-white`).
-- **Toast Notifications:** Trigger non-intrusive toast feedback for every create, update, delete, or error action.
-- **Mobile-First Responsiveness:** Zero horizontal scrolling at `375px` width. Tables must wrap in `overflow-x-auto` or collapse into stacked cards on mobile screens.
-- **Iconography:** Use `lucide-react` exclusively with uniform stroke width (`strokeWidth={1.75}`) and consistent sizing (`w-4 h-4` inside buttons, `w-5 h-5` in navigation).
+## 2. Type, Numbers, and Reading Width
+
+Load Google Fonts in `index.html`: English uses Playfair Display for display headings, Inter for the landing hero headline, and Plus Jakarta Sans for interface/body text; Arabic uses Cairo for display headings and IBM Plex Sans Arabic for interface/body text and the landing hero. Switch font families with the document language.
+
+- Hero heading: `text-4xl sm:text-5xl font-semibold tracking-tight`.
+- Section heading: `text-xl sm:text-2xl font-semibold`.
+- Card title: `text-base sm:text-lg font-semibold`.
+- Body copy: `text-sm sm:text-base leading-relaxed`.
+- Arabic body copy must use at least `line-height: 1.75`.
+- Long paragraphs use `max-w-prose` (65–75ch); avoid wide, hard-to-scan text blocks.
+- Salaries, percentages, counts, and all dashboard metrics use `tabular-nums`.
+
+## 3. Layout and Spacing
+
+Follow the 8pt rhythm. Use Tailwind spacing utilities in multiples of 4px, favoring `gap-4`, `gap-6`, `gap-8`, `p-6`, and `p-8`. Cards must have at least `p-6`; card grids use at least `gap-6`. Keep `mb-8` to `mb-12` between major sections. Never use arbitrary spacing values.
+
+Content containers use `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`. Job cards show at most four scannable data points: title; company and verified badge when the API confirms verification; location/category; salary or match. Keep card copy concise.
+
+## 4. Shape and Interaction States
+
+Use `rounded-xl` for cards, `rounded-lg` for buttons and inputs, and `rounded-full` for pills. Standard buttons and navigation actions use `h-10` (40px); primary hero CTAs may use `h-11` (44px). Use `px-4` to `px-5` and `text-sm font-medium` for compact actions. Inputs use `h-10` (40px). Keep focus indicators visible and preserve comfortable clickable link areas. Every interactive element defines default, hover, keyboard focus, and disabled/loading states.
+
+For the global navbar, use a compact `h-16` bar with `h-8` navigation and sign-in/sign-up controls, `text-xs` labels, and tight spacing. The language control is a small two-position slider labeled `EN` and `عربي`, with a moving thumb that reflects the active language.
+
+- Hover uses `transition-colors duration-150`; primary hover may use `#1F2822`.
+- Focus uses `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2`.
+- Disabled controls use `disabled:opacity-50 disabled:cursor-not-allowed`.
+- Async buttons show an inline lucide spinner and prevent duplicate submissions.
+- Buttons and badges use `whitespace-nowrap` so Arabic labels stay intact.
+
+## 5. Forms and Feedback
+
+Place visible labels above every input. Inputs use `w-full h-10 px-4 rounded-lg bg-white border border-[#E5E2D9] text-sm text-[#1C221E] focus:border-[#A37E5E]`. Auth form cards use `max-w-md p-6`; stack fields with `space-y-3.5`. Show inline validation messages directly below invalid fields and set `aria-invalid`; never rely on placeholders as labels. Validation must use clear text and an accent/error border while preserving the palette rules.
+
+Use layout-matched skeletons (`animate-pulse bg-[#E5E2D9]/60 rounded-lg`) while loading. Lists need a designed empty state with a centered lucide icon, concise explanation, and one primary CTA. Show non-intrusive toast feedback for successful auth/form actions and errors. Do not use generic full-page spinners.
+
+## 6. Bilingual RTL/LTR Rules
+
+The active language is `en` or `ar`. Set `<html lang>` and `<html dir>` to match it. All UI copy, labels, placeholders, validation text, role names, accessibility labels, toasts, and empty/loading states must come from the i18next dictionaries; do not hardcode visible UI strings in components.
+
+Use Tailwind logical utilities only: `ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, and `text-start`. Never use `ml-*`, `mr-*`, `pl-*`, `pr-*`, `left-*`, `right-*`, `text-left`, or `text-right`. Flip directional icons in RTL with `rtl:rotate-180`. Use `dir="auto"` for user-entered names, emails, URLs, and other mixed-direction values.
+
+## 7. Responsive Behavior and Icons
+
+Design mobile-first and verify at 375px with no horizontal page scrolling. Collapse multi-column layouts into a single column on small screens. Any table must use `overflow-x-auto` or become stacked cards.
+
+Use `lucide-react` exclusively for interface icons, with `strokeWidth={1.75}`. Use `w-4 h-4` inside buttons and `w-5 h-5` in navigation; larger illustration icons may use a consistent larger square size. Decorative icons are hidden from assistive technology; functional icons have translated accessible labels.
+
+## 8. Atmospheric Photography and Dark Overlays
+
+Use full-bleed professional workplace photography for the landing hero and split-screen authentication visual panel. For the landing hero, use `https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=2000&q=85`; for authentication, use `https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=85`. Always provide a Deep Forest fallback background so the layout and contrast remain usable if an image request fails.
+
+For the landing hero, use this lighter Deep Forest overlay above photography and below text: `linear-gradient(135deg, rgba(22, 29, 25, 0.68) 0%, rgba(43, 54, 46, 0.52) 55%, rgba(22, 29, 25, 0.66) 100%)`. Keep the hero photo full-viewport so it remains the dominant visual. Authentication photography may retain the darker overlay. Ivory `#FAF9F5` headlines and Warm Bronze `#A37E5E` accents may sit on the dark overlay. Translucent highlights may use `bg-white/10 backdrop-blur-md border-white/15`; keep them restrained, readable, and separated from the background. This photo treatment is a deliberate exception to the standard white-card surface rule and must not introduce blue or purple gradients.
+
+## 9. Motion and GSAP Boundaries
+
+Install and use `motion` from `motion/react` for floating hero badges, card hover elevation, modal/alert transitions with `AnimatePresence`, and tactile button tap/hover feedback. Keep these effects subtle and use vertical (`y`) and opacity movement so layouts mirror naturally in RTL.
+
+Use `gsap` with `ScrollTrigger` for the hero photo's slow scale/parallax drift, the staggered hero text/CTA entrance, scroll-triggered section reveals, and numeric counters. Put GSAP setup inside `useEffect`, scope it with `gsap.context()` to a page root ref, and call `context.revert()` during cleanup. Do not let Motion and GSAP animate the same DOM node: assign a node to one animation system only.
+
+Respect `prefers-reduced-motion`: disable or simplify non-essential movement, while preserving content visibility, focus indicators, and usable controls. Avoid horizontal motion and layout shifts; keep all animation labels and status copy translated in both dictionaries.
