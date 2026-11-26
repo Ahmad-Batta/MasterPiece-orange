@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\Models\Admin;
 use App\Models\Application;
+use App\Models\Category;
 use App\Models\Company;
+use App\Models\Job;
 use App\Models\JobPost;
 use App\Models\MatchingJob;
 use App\Models\Seeker;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class AdminService
 {
@@ -26,7 +29,27 @@ class AdminService
             'active_job_posts' => JobPost::query()->where('status', 'active')->count(),
             'total_applications' => Application::query()->count(),
             'average_ai_match_score' => round((float) $averageMatch, 2),
+            'recent_activities' => $this->recentActivities(),
         ];
+    }
+
+    private function recentActivities(): array
+    {
+        $activities = collect();
+        Application::query()->with(['seeker', 'jobPost'])->orderByDesc('applied_at')->limit(10)->get()->each(function (Application $application) use ($activities): void {
+            $activities->push(['type' => 'application', 'occurred_at' => $application->applied_at, 'description' => ($application->seeker?->{'first name'} ?? 'A seeker').' applied for '.($application->jobPost?->title ?? 'a job'), 'entity_id' => $application->application_id]);
+        });
+        Seeker::query()->orderByDesc('created at')->limit(10)->get(['seeker_id', 'first name', 'last name', 'created at'])->each(function (Seeker $seeker) use ($activities): void {
+            $activities->push(['type' => 'seeker_registered', 'occurred_at' => $seeker->{'created at'}, 'description' => trim($seeker->{'first name'}.' '.$seeker->{'last name'}).' registered', 'entity_id' => $seeker->seeker_id]);
+        });
+        Company::query()->orderByDesc('created_at')->limit(10)->get(['company_id', 'company_name', 'created_at'])->each(function (Company $company) use ($activities): void {
+            $activities->push(['type' => 'company_registered', 'occurred_at' => $company->created_at, 'description' => $company->company_name.' registered', 'entity_id' => $company->company_id]);
+        });
+        JobPost::query()->orderByDesc('created_at')->limit(10)->get(['post_id', 'title', 'created_at'])->each(function (JobPost $post) use ($activities): void {
+            $activities->push(['type' => 'job_post_published', 'occurred_at' => $post->created_at, 'description' => $post->title.' was published', 'entity_id' => $post->post_id]);
+        });
+
+        return $activities->sortByDesc(fn (array $item) => $item['occurred_at']?->timestamp ?? 0)->take(10)->values()->all();
     }
 
     public function verificationQueue(): LengthAwarePaginator
@@ -41,16 +64,41 @@ class AdminService
         return $company->fresh();
     }
 
-    public function users(): array
+    public function users(array $filters = []): LengthAwarePaginator
     {
-        return [
-            'admins' => Admin::query()->get(['admin_id', 'username', 'email', 'role', 'is_active'])
-                ->map(fn (Admin $admin) => ['id' => $admin->admin_id, 'name' => $admin->username, 'email' => $admin->email, 'role' => 'admin', 'is_active' => $admin->is_active])->all(),
-            'seekers' => Seeker::query()->get(['seeker_id', 'first name', 'last name', 'email', 'is_active'])
-                ->map(fn (Seeker $seeker) => ['id' => $seeker->seeker_id, 'name' => trim($seeker->{'first name'}.' '.$seeker->{'last name'}), 'email' => $seeker->email, 'role' => 'seeker', 'is_active' => $seeker->is_active])->all(),
-            'companies' => Company::query()->get(['company_id', 'company_name', 'email', 'is_active'])
-                ->map(fn (Company $company) => ['id' => $company->company_id, 'name' => $company->company_name, 'email' => $company->email, 'role' => 'company', 'is_active' => $company->is_active])->all(),
-        ];
+        $rows = collect();
+        if (! isset($filters['role']) || $filters['role'] === 'admin') {
+            $rows = $rows->merge(Admin::query()->get(['admin_id', 'username', 'email', 'role', 'is_active'])->map(fn (Admin $u) => ['id' => $u->admin_id, 'name' => $u->username, 'email' => $u->email, 'role' => 'admin', 'is_active' => (bool) $u->is_active, 'created_at' => $u->{'created at'}]));
+        }
+        if (! isset($filters['role']) || $filters['role'] === 'seeker') {
+            $rows = $rows->merge(Seeker::query()->get(['seeker_id', 'first name', 'last name', 'email', 'is_active', 'created at'])->map(fn (Seeker $u) => ['id' => $u->seeker_id, 'name' => trim($u->{'first name'}.' '.$u->{'last name'}), 'email' => $u->email, 'role' => 'seeker', 'is_active' => (bool) $u->is_active, 'created_at' => $u->{'created at'}]));
+        }
+        if (! isset($filters['role']) || $filters['role'] === 'company') {
+            $rows = $rows->merge(Company::query()->get(['company_id', 'company_name', 'email', 'is_active', 'created_at'])->map(fn (Company $u) => ['id' => $u->company_id, 'name' => $u->company_name, 'email' => $u->email, 'role' => 'company', 'is_active' => (bool) $u->is_active, 'created_at' => $u->created_at]));
+        }
+        $rows = $rows->filter(function (array $row) use ($filters): bool {
+            $searchMatches = empty($filters['search']) || str_contains(mb_strtolower($row['name'].' '.$row['email']), mb_strtolower($filters['search']));
+            $statusMatches = ! isset($filters['status']) || (string) (int) $row['is_active'] === (string) $filters['status'];
+
+            return $searchMatches && $statusMatches;
+        })->sortByDesc(fn (array $row) => $row['created_at']?->timestamp ?? 0)->values();
+
+        return $this->paginateCollection($rows, $filters['per_page'] ?? 25);
+    }
+
+    public function categories(array $filters = []): LengthAwarePaginator
+    {
+        return Category::query()->when($filters['search'] ?? null, fn ($q, $v) => $q->where('category_name', 'like', '%'.$v.'%'))
+            ->when($filters['category_id'] ?? null, fn ($q, $v) => $q->where('category_id', $v))
+            ->orderBy('category_name')->paginate($filters['per_page'] ?? 25);
+    }
+
+    public function jobs(array $filters = []): LengthAwarePaginator
+    {
+        return Job::query()->with(['category', 'company'])
+            ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('title', 'like', '%'.$v.'%')->orWhere('description', 'like', '%'.$v.'%')))
+            ->when($filters['category_id'] ?? null, fn ($q, $v) => $q->where('category_id', $v))
+            ->orderByDesc('created_at')->paginate($filters['per_page'] ?? 25);
     }
 
     public function deactivateUser(string $role, int $id): Model
@@ -71,9 +119,42 @@ class AdminService
         return $user;
     }
 
-    public function jobPosts(): LengthAwarePaginator
+    public function jobPosts(array $filters = []): LengthAwarePaginator
     {
-        return JobPost::query()->with(['company', 'job.category'])->orderByDesc('created_at')->paginate(25);
+        return JobPost::query()->with(['company', 'category', 'job.category'])
+            ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('title', 'like', '%'.$v.'%')->orWhere('content', 'like', '%'.$v.'%')))
+            ->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v))
+            ->when($filters['category_id'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('category_id', $v)->orWhereHas('job', fn ($job) => $job->where('category_id', $v))))
+            ->orderByDesc('created_at')->paginate($filters['per_page'] ?? 25);
+    }
+
+    public function updateJobPost(JobPost $post, array $data): JobPost
+    {
+        $post->update(array_filter([
+            'title' => $data['title'] ?? null,
+            'content' => $data['description'] ?? null,
+            'category_id' => $data['category_id'] ?? null,
+            'location' => $data['location'] ?? null,
+            'status' => $data['status'] ?? null,
+            'salary_min' => $data['salary_min'] ?? null,
+            'salary_max' => $data['salary_max'] ?? null,
+        ], fn ($value) => $value !== null));
+
+        if ($post->job && (isset($data['job_type']) || isset($data['required_skills']))) {
+            $post->job->update(array_filter([
+                'job_type' => $data['job_type'] ?? null,
+                'required_skills' => isset($data['required_skills']) ? json_encode($data['required_skills']) : null,
+            ], fn ($value) => $value !== null));
+        }
+
+        return $post->fresh(['company', 'category', 'job.category']);
+    }
+
+    private function paginateCollection(Collection $rows, int $perPage): LengthAwarePaginator
+    {
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
+        return new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => LengthAwarePaginator::resolveCurrentPath()]);
     }
 
     public function removeJobPost(int $id): array

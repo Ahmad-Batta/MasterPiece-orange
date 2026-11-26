@@ -110,9 +110,17 @@ The persisted and returned evaluation schema is:
 
 ## 6. Admin APIs
 
-- `GET /api/admin/stats` returns `total_seekers`, `total_companies`, `active_job_posts`, `total_applications`, and `average_ai_match_score`.
+- `GET /api/admin/stats` returns `total_seekers`, `total_companies`, `active_job_posts`, `total_applications`, `average_ai_match_score`, and `recent_activities` (up to 10 newest events, each `{ "type": "application | seeker_registered | company_registered | job_post_published", "occurred_at": "timestamp", "description": "...", "entity_id": 1 }`). Events are sorted newest first.
 - `GET /api/admin/verifications` lists pending companies.
 - `PATCH /api/admin/companies/{id}/verify` accepts `{ "verification_status": "verified | unverified" }` for a pending company.
-- `GET /api/admin/users` lists account summaries without credentials.
+- `GET /api/admin/users` returns paginated `data.items` and `data.pagination`; supports `search`, `role=seeker|company|admin`, `status=active|inactive`, and `per_page=1..100`. User summaries never include credentials.
+- `POST /api/admin/users` creates a seeker or company. Required: `{ "role": "seeker|company", "name": "...", "email": "...", "password": "..." }`. Optional profile fields include `industry`, `description`, `location`, `major`, and `category_id`. Email is checked globally across all account tables. Success is `201`.
+- `PUT|PATCH /api/admin/users/{id}` updates a user; `role=seeker|company|admin` is required in the body to identify the account table. Optional fields: `name`, `email`, `password`, `status=active|inactive` or `is_active`, and role-appropriate `industry`, `description`, `location`, `major`, or `category_id`.
 - `DELETE /api/admin/users/{role}/{id}` (`role`: `admin`, `seeker`, or `company`) deactivates the account while preserving its data.
-- `GET /api/admin/job-posts` lists all posts; `DELETE /api/admin/job-posts/{id}` removes a post without history or closes it when applications/matches exist.
+- `GET /api/admin/job-posts` returns paginated `data.items` and `data.pagination`; supports `search`, `status=active|closed`, `category_id`, and `per_page=1..100`.
+- `PUT|PATCH /api/admin/job-posts/{id}` accepts optional `title`, `description`, `category_id`, `location`, `salary_min`, `salary_max`, and `status=active|closed` (also `job_type` and `required_skills`).
+- `DELETE /api/admin/job-posts/{id}` removes a post without history or closes it when applications/matches exist.
+- `GET /api/admin/categories` returns paginated items and pagination; supports `search`, `category_id`, and `per_page=1..100`. `POST /api/admin/categories` requires `{ "category_name": "..." }`. `PUT|PATCH /api/admin/categories/{id}` updates `category_name`; `DELETE /api/admin/categories/{id}` deletes an unused category or returns `409` when seekers or standard jobs reference it.
+- `GET /api/admin/jobs` returns paginated standard job items and pagination; supports `search`, `category_id`, and `per_page=1..100`. `POST /api/admin/jobs` requires `company_id`, `category_id`, `title`, `description`, `location`, and `job_type`, with optional `required_skills` array. `PUT|PATCH /api/admin/jobs/{id}` accepts those fields optionally. `DELETE /api/admin/jobs/{id}` deletes an unreferenced job or returns `409` if applications, matches, or job posts reference it.
+
+All paginated admin list endpoints return `{ "items": [], "pagination": { "current_page": 1, "last_page": 1, "per_page": 25, "total": 0 } }` inside the standard `data` envelope.

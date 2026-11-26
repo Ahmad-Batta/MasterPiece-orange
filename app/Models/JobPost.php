@@ -16,7 +16,7 @@ class JobPost extends Model
 
     protected $fillable = [
         'company_id', 'job_id', 'title', 'content', 'post_type', 'created_at', 'status',
-        'salary_min', 'salary_max', 'experience_level',
+        'salary_min', 'salary_max', 'experience_level', 'category_id', 'location',
     ];
 
     protected function casts(): array
@@ -24,6 +24,7 @@ class JobPost extends Model
         return [
             'company_id' => 'integer',
             'job_id' => 'integer',
+            'category_id' => 'integer',
             'salary_min' => 'decimal:2',
             'salary_max' => 'decimal:2',
             'created_at' => 'datetime',
@@ -38,6 +39,11 @@ class JobPost extends Model
     public function job(): BelongsTo
     {
         return $this->belongsTo(Job::class, 'job_id', 'job_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id', 'category_id');
     }
 
     public function applications(): HasMany

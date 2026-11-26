@@ -7,7 +7,7 @@
 - Never run `migrate:fresh`, drop, rename, or rebuild the existing MySQL tables. The guarded baseline migration must record this existing schema without modifying it; schema changes must be additive and preserve all current rows.
 - `jobs` is the existing CAREERhub domain table. Do not install Laravel's database queue migration under that name.
 - The existing schema needs additive authentication columns: `admin.password`, `seeker.password`, `companies.email`, and `companies.password`. Keep legacy columns, including `seeker.hashed password`, intact.
-- Milestone 2 adds `job_posts.status`, a nullable `job_posts.job_id` link, salary/experience fields, `applications.job_post_id`, profile/CV/verification fields, AI report JSON, and `is_active` flags. Preserve old `applications.job_id` and `matching_jobs.job_id`; new workflows populate both legacy and job-post links where applicable.
+- Milestone 2 adds `job_posts.status`, nullable `job_posts.job_id`, `job_posts.category_id`, and `job_posts.location`, salary/experience fields, `applications.job_post_id`, profile/CV/verification fields, AI report JSON, and `is_active` flags. These are additive changes; preserve all rows and old `applications.job_id` and `matching_jobs.job_id` values.
 - Keep application status values `Pending`, `Interview`, and `Rejected`; job-post states are `active` and `closed`; company verification states are `unverified`, `pending`, and `verified`.
 - Preserve existing column spellings and spaces such as `first name`, `last name`, `created at`, and `Phone_number` in SQL and Eloquent mappings.
 - Use Laravel for the REST API, MySQL for persistence, Sanctum for token authentication, React for the SPA, and Tailwind CSS for styling, as specified in `REQUIREMENTS.md`.
