@@ -10,7 +10,7 @@ const navigationGroups = [
       { key: 'aiCvStudio', href: '/register?role=seeker' },
       { key: 'fitScore', href: '/register?role=seeker' },
       { key: 'jobDiscovery', href: '#jobs' },
-      { key: 'proPlans', href: '/register?role=seeker' },
+      { key: 'proPlans', href: '#pricing' },
     ],
   },
   {

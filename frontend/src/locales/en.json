@@ -21,6 +21,7 @@
     "home": "Home",
     "workflow": "How it works",
     "opportunities": "Opportunities",
+    "pricing": "Pricing",
     "login": "Log in",
     "register": "Create account",
     "workspace": "My workspace",
@@ -143,7 +144,7 @@
       "aiCvStudio": "AI CV Studio",
       "fitScore": "Fit Score & Skill Gap",
       "jobDiscovery": "Job Discovery",
-      "proPlans": "Pro Plans",
+      "proPlans": "Plans & Pricing",
       "engineering": "Engineering",
       "itSoftware": "IT & Software",
       "businessFinance": "Business & Finance",
@@ -170,6 +171,42 @@
       "linkedin": "LinkedIn",
       "instagram": "Instagram",
       "github": "GitHub"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Plans for your next step",
+    "title": "Simple plans. Better career decisions.",
+    "subtitle": "Start with the essentials, then choose the AI support that fits your goals.",
+    "roleLabel": "Choose plans for",
+    "seekerAudience": "For Job Seekers",
+    "companyAudience": "For Companies",
+    "seekerStarter": "Starter",
+    "companyStarter": "Company Starter",
+    "seekerPro": "Seeker Pro",
+    "companyPro": "Company Pro",
+    "freeBadge": "Free plan",
+    "proBadge": "Pro plan",
+    "starterDescription": "A strong start, with no subscription cost.",
+    "proDescription": "More AI support for a focused search or hiring process.",
+    "forever": "forever",
+    "perDays": "per {{count}} days",
+    "cta": "Create account",
+    "features": {
+      "seekerFreeCv": "Free PDF/DOCX CV auto-fill",
+      "seekerResumeBuilder": "Classic ATS-ready A4 resume builder",
+      "seekerLimitedAi": "Limited AI CV and job match checks",
+      "seekerVerifiedJobs": "Browse and apply to verified jobs",
+      "seekerUnlimitedReviews": "Unlimited AI ATS CV reviews",
+      "seekerSkillRoadmaps": "Unlimited AI skill-gap roadmaps",
+      "seekerPriorityFit": "Priority fit score analysis",
+      "seekerPdfExports": "Unlimited PDF exports",
+      "companyVerifiedProfile": "Verified company profile",
+      "companyActiveListings": "Post active job listings",
+      "companyApplicantTracking": "Basic applicant tracking",
+      "companyAiJobDescriptions": "AI job description generator",
+      "companyCandidateRanking": "Automated AI candidate fit ranking (0–100%)",
+      "companyCandidateInsights": "Candidate strengths and gaps summary",
+      "companyInterviewQuestions": "AI-tailored interview questions"
     }
   },
   "jobs": {
@@ -247,6 +284,83 @@
     "passwordLength": "Use at least 8 characters.",
     "passwordConfirmation": "The passwords do not match.",
     "nameLength": "Enter a name with 2 or more characters."
+  },
+  "admin": {
+    "shell": {
+      "label": "Admin console",
+      "navigation": "Admin navigation",
+      "roleBadge": "Administrator",
+      "sidebarNote": "CareerHub platform operations",
+      "logoutError": "We could not complete sign out, but your local session has been cleared."
+    },
+    "navigation": {
+      "overview": "Overview",
+      "usersCompanies": "Companies & Users",
+      "catalog": "Categories & Jobs"
+    },
+    "placeholder": {
+      "eyebrow": "Coming next",
+      "usersCompanies": {
+        "title": "Companies & Users",
+        "body": "Account search, company verification, and user management will be available here in the next admin step."
+      },
+      "catalog": {
+        "title": "Categories & Jobs",
+        "body": "Category and standardized job management will be available here in the next admin step."
+      }
+    },
+    "overview": {
+      "eyebrow": "Platform administration",
+      "title": "Admin overview",
+      "subtitle": "A live view of CareerHub registrations, opportunities, applications, and recent activity.",
+      "refresh": "Refresh",
+      "loadError": "We could not load platform statistics. Check the connection and try again.",
+      "retry": "Try again",
+      "metricsLabel": "CareerHub platform statistics"
+    },
+    "metrics": {
+      "seekers": "Total seekers",
+      "companies": "Total companies",
+      "pendingVerifications": "Pending verifications",
+      "activeJobs": "Active job posts",
+      "applications": "Total applications",
+      "paidProTransactions": "Paid Pro transactions"
+    },
+    "activities": {
+      "eyebrow": "Platform pulse",
+      "title": "Recent activity",
+      "latestCount": "{{count}} recent events",
+      "emptyTitle": "No recent activity yet",
+      "emptyBody": "New registrations, applications, and job posts will appear here.",
+      "open": "Review",
+      "types": {
+        "application": "New application",
+        "seeker_registered": "New seeker registered",
+        "company_registered": "New company registered",
+        "job_post_published": "Job post published",
+        "other": "Platform update"
+      }
+    },
+    "summary": {
+      "eyebrow": "At a glance",
+      "title": "Platform summary",
+      "averageMatch": "Average AI match score",
+      "totalRevenue": "Paid revenue"
+    },
+    "actions": {
+      "manageUsers": "Manage companies & users",
+      "manageCatalog": "Manage categories & jobs"
+    },
+    "notifications": {
+      "open": "Open notifications, {{count}} unread",
+      "title": "Notifications",
+      "unread": "{{count}} unread",
+      "markAllRead": "Mark all read",
+      "emptyTitle": "You are all caught up",
+      "emptyBody": "New platform notifications will appear here.",
+      "loadError": "Notifications could not be loaded.",
+      "updateError": "Notification status could not be updated."
+    }
   },
   "dashboard": {
     "welcome": "Welcome, {{name}}",

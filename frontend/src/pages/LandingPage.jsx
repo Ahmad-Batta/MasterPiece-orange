@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, BriefcaseBusiness, CalendarCheck2, CheckCircle2, FileText, MapPin, Quote, Search, SlidersHorizontal, Sparkles, Target } from 'lucide-react';
-import { motion, useAnimationControls } from 'motion/react';
+import { AnimatePresence, motion, useAnimationControls } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { dashboardPath, useAuth } from '../context/AuthContext';
@@ -167,6 +167,8 @@ export default function LandingPage() {
   const marqueeControls = useAnimationControls();
   const [jobs, setJobs] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [plansByRole, setPlansByRole] = useState({ seeker: [], company: [] });
+  const [pricingRole, setPricingRole] = useState('seeker');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -203,6 +205,22 @@ export default function LandingPage() {
       });
     return () => controller.abort();
   }, [loadJobs]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all(['seeker', 'company'].map(async (role) => {
+      try {
+        const { data } = await api.get('/plans', { params: { role }, signal: controller.signal });
+        const plans = Array.isArray(data?.data?.items) ? data.data.items : responseItems(data);
+        return [role, plans.filter((plan) => plan.is_active !== false)];
+      } catch {
+        return [role, []];
+      }
+    })).then((entries) => {
+      if (!controller.signal.aborted) setPlansByRole(Object.fromEntries(entries));
+    });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const root = pageRef.current;
@@ -315,6 +333,43 @@ export default function LandingPage() {
 
   const retryJobs = () => loadJobs();
   const countLabel = new Intl.NumberFormat(i18n.language === 'ar' ? 'ar-JO' : 'en-US').format(filteredJobs.length);
+  const rolePlans = plansByRole[pricingRole] || [];
+  const proPlan = rolePlans.find((plan) => `${plan.slug || ''} ${plan.name || ''}`.toLocaleLowerCase().includes('pro')) || rolePlans[0];
+  const pricingCards = [
+    {
+      id: 'starter',
+      name: t(pricingRole === 'seeker' ? 'pricing.seekerStarter' : 'pricing.companyStarter'),
+      badge: t('pricing.freeBadge'),
+      price: 0,
+      currency: 'USD',
+      duration: null,
+      features: pricingRole === 'seeker'
+        ? ['seekerFreeCv', 'seekerResumeBuilder', 'seekerLimitedAi', 'seekerVerifiedJobs']
+        : ['companyVerifiedProfile', 'companyActiveListings', 'companyApplicantTracking'],
+      highlighted: false,
+    },
+    {
+      id: 'pro',
+      name: proPlan?.name || t(pricingRole === 'seeker' ? 'pricing.seekerPro' : 'pricing.companyPro'),
+      badge: t('pricing.proBadge'),
+      price: proPlan?.price ?? (pricingRole === 'seeker' ? 9.99 : 29.99),
+      currency: proPlan?.currency || 'USD',
+      duration: Number(proPlan?.duration_days ?? 30),
+      features: pricingRole === 'seeker'
+        ? ['seekerUnlimitedReviews', 'seekerSkillRoadmaps', 'seekerPriorityFit', 'seekerPdfExports']
+        : ['companyAiJobDescriptions', 'companyCandidateRanking', 'companyCandidateInsights', 'companyInterviewQuestions'],
+      highlighted: true,
+    },
+  ];
+  const formatPlanPrice = (amount, currency) => {
+    try {
+      return new Intl.NumberFormat(i18n.language === 'ar' ? 'ar-JO' : 'en-US', {
+        style: 'currency', currency: currency || 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2,
+      }).format(Number(amount));
+    } catch {
+      return `${Number(amount).toFixed(2)} ${currency || 'USD'}`;
+    }
+  };
 
   return (
     <>
@@ -509,6 +564,69 @@ export default function LandingPage() {
               </motion.article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section id="pricing" className="scroll-mt-24 bg-[#FAF9F5] py-12 sm:py-16" aria-labelledby="pricing-title">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="gsap-reveal mx-auto mb-8 max-w-2xl text-center sm:mb-12">
+            <p className="mb-3 text-xs font-semibold tracking-wide text-[#A37E5E]">{t('pricing.eyebrow')}</p>
+            <h2 id="pricing-title" className="section-title">{t('pricing.title')}</h2>
+            <p className="mx-auto mt-3 max-w-prose text-sm leading-relaxed text-[#1C221E] sm:text-base">{t('pricing.subtitle')}</p>
+          </div>
+
+          <div className="mx-auto mb-8 flex w-fit rounded-full border border-[#E5E2D9] bg-white p-1" role="group" aria-label={t('pricing.roleLabel')}>
+            {['seeker', 'company'].map((role) => (
+              <button
+                key={role}
+                type="button"
+                className={`relative inline-flex h-10 min-w-32 cursor-pointer items-center justify-center whitespace-nowrap rounded-full px-4 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 ${pricingRole === role ? 'text-white' : 'text-[#2B362E] hover:bg-[#FAF9F5]'}`}
+                onClick={() => setPricingRole(role)}
+                aria-pressed={pricingRole === role}
+              >
+                {pricingRole === role && <motion.span layoutId="pricingRoleSlider" className="absolute inset-0 rounded-full bg-[#2B362E]" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+                <span className="relative z-10">{t(`pricing.${role}Audience`)}</span>
+              </button>
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={pricingRole}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2"
+            >
+              {pricingCards.map((plan) => (
+                <article key={plan.id} className={`flex flex-col rounded-xl border bg-white p-6 ${plan.highlighted ? 'border-[#A37E5E]' : 'border-[#E5E2D9]'}`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#1C221E]">{plan.name}</h3>
+                    <p className="mt-1 text-xs text-[#1C221E]/70">{t(plan.highlighted ? 'pricing.proDescription' : 'pricing.starterDescription')}</p>
+                  </div>
+                  <span className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold ${plan.highlighted ? 'border-[#A37E5E]/50 bg-[#A37E5E]/10 text-[#8E6B4D]' : 'border-[#E5E2D9] bg-[#FAF9F5] text-[#2B362E]'}`}>{plan.badge}</span>
+                </div>
+                <div className="mt-5 flex items-baseline gap-2">
+                  <span className="tabular-nums text-3xl font-semibold tracking-tight text-[#2B362E]">{formatPlanPrice(plan.price, plan.currency)}</span>
+                  <span className="text-xs text-[#1C221E]/70">{plan.duration ? t('pricing.perDays', { count: plan.duration }) : t('pricing.forever')}</span>
+                </div>
+                <ul className="mt-5 flex-1 space-y-3 border-t border-[#E5E2D9] pt-5">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm leading-relaxed text-[#1C221E]">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />
+                      <span>{t(`pricing.features.${feature}`)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link to={`/register?role=${pricingRole}`} className={`mt-6 inline-flex h-10 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 ${plan.highlighted ? 'bg-[#2B362E] text-white hover:bg-[#1F2822]' : 'border border-[#E5E2D9] bg-white text-[#2B362E] hover:bg-[#FAF9F5]'}`}>
+                  {t('pricing.cta')}
+                </Link>
+                </article>
+              ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </section>
       </main>

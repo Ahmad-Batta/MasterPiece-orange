@@ -4,12 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { MotionConfig } from 'motion/react';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminOverviewPage from './pages/AdminOverviewPage';
+import AdminPlaceholderPage from './pages/AdminPlaceholderPage';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
 import RegisterPage from './pages/RegisterPage';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import DashboardLayout from './layouts/DashboardLayout';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 
@@ -32,7 +35,11 @@ function ApplicationRoutes() {
         <Route path="/seeker/dashboard" element={<ProtectedRoute role="seeker"><DashboardPage role="seeker" /></ProtectedRoute>} />
         <Route path="/seeker/jobs" element={<ProtectedRoute role="seeker"><DashboardPage role="seeker" /></ProtectedRoute>} />
         <Route path="/company/dashboard" element={<ProtectedRoute role="company"><DashboardPage role="company" /></ProtectedRoute>} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><DashboardPage role="admin" /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute role="admin"><DashboardLayout /></ProtectedRoute>}>
+          <Route path="dashboard" element={<AdminOverviewPage />} />
+          <Route path="users-companies" element={<AdminPlaceholderPage section="usersCompanies" />} />
+          <Route path="catalog" element={<AdminPlaceholderPage section="catalog" />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

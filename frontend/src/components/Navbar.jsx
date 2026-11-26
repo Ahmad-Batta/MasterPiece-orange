@@ -21,6 +21,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', updateScrollState);
   }, [location.pathname]);
 
+  if (location.pathname.startsWith('/admin')) return null;
+
   const closeMenu = () => setMenuOpen(false);
   const navClass = `inline-flex h-8 cursor-pointer items-center whitespace-nowrap rounded-lg px-2 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 ${isDark ? 'text-[#FAF9F5] hover:bg-white/10 focus-visible:ring-offset-[#2B362E]' : 'text-[#1C221E] hover:bg-[#FAF9F5]'}`;
   const buttonClass = `inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 ${isDark ? 'border-white/30 bg-white/10 text-[#FAF9F5] hover:bg-white/15 focus-visible:ring-offset-[#2B362E]' : 'border-[#E5E2D9] bg-white text-[#2B362E] hover:bg-[#FAF9F5]'}`;
@@ -38,6 +40,7 @@ export default function Navbar() {
           <Link className={navClass} to="/">{t('nav.home')}</Link>
           {isLanding && <a className={navClass} href="#how-it-works">{t('nav.workflow')}</a>}
           {isLanding && <a className={navClass} href="#jobs">{t('nav.opportunities')}</a>}
+          {isLanding && <a className={navClass} href="#pricing">{t('nav.pricing')}</a>}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -69,6 +72,7 @@ export default function Navbar() {
             <Link className={navClass} to="/" onClick={closeMenu}>{t('nav.home')}</Link>
             {isLanding && <a className={navClass} href="#how-it-works" onClick={closeMenu}>{t('nav.workflow')}</a>}
             {isLanding && <a className={navClass} href="#jobs" onClick={closeMenu}>{t('nav.opportunities')}</a>}
+            {isLanding && <a className={navClass} href="#pricing" onClick={closeMenu}>{t('nav.pricing')}</a>}
             {session ? (
               <>
                 <Link className={navClass} to={dashboardPath(session.role)} onClick={closeMenu}>{t('nav.workspace')}</Link>

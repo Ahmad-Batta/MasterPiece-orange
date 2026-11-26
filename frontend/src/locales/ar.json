@@ -21,6 +21,7 @@
     "home": "الرئيسية",
     "workflow": "كيف تعمل المنصة",
     "opportunities": "الفرص الوظيفية",
+    "pricing": "الأسعار",
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب",
     "workspace": "مساحة عملي",
@@ -143,7 +144,7 @@
       "aiCvStudio": "استوديو السيرة الذكية",
       "fitScore": "درجة التوافق وفجوة المهارات",
       "jobDiscovery": "اكتشاف الوظائف",
-      "proPlans": "خطط Pro",
+      "proPlans": "الخطط والأسعار",
       "engineering": "الهندسة",
       "itSoftware": "تقنية المعلومات والبرمجيات",
       "businessFinance": "الأعمال والتمويل",
@@ -170,6 +171,42 @@
       "linkedin": "LinkedIn",
       "instagram": "Instagram",
       "github": "GitHub"
+    }
+  },
+  "pricing": {
+    "eyebrow": "خطط تناسب خطوتك القادمة",
+    "title": "خطط واضحة وقرارات مهنية أفضل",
+    "subtitle": "ابدأ بالأساسيات، ثم اختر دعم الذكاء الاصطناعي الذي يناسب أهدافك.",
+    "roleLabel": "اختر الخطط المناسبة لـ",
+    "seekerAudience": "الباحثين عن عمل",
+    "companyAudience": "الشركات",
+    "seekerStarter": "البداية",
+    "companyStarter": "خطة الشركات المجانية",
+    "seekerPro": "Seeker Pro",
+    "companyPro": "Company Pro",
+    "freeBadge": "خطة مجانية",
+    "proBadge": "خطة Pro",
+    "starterDescription": "بداية قوية دون رسوم اشتراك.",
+    "proDescription": "دعم أكبر بالذكاء الاصطناعي للبحث عن عمل أو التوظيف.",
+    "forever": "دائمًا",
+    "perDays": "كل {{count}} يومًا",
+    "cta": "إنشاء حساب",
+    "features": {
+      "seekerFreeCv": "تعبئة السيرة الذاتية مجانًا من PDF أو DOCX",
+      "seekerResumeBuilder": "منشئ سيرة أكاديمية A4 متوافقة مع ATS",
+      "seekerLimitedAi": "عدد محدود من مراجعات السيرة والتوافق بالذكاء الاصطناعي",
+      "seekerVerifiedJobs": "استكشاف الوظائف الموثقة والتقديم إليها",
+      "seekerUnlimitedReviews": "مراجعات غير محدودة للسيرة وفق ATS بالذكاء الاصطناعي",
+      "seekerSkillRoadmaps": "خطط غير محدودة لسد فجوات المهارات بالذكاء الاصطناعي",
+      "seekerPriorityFit": "تحليل أولوية درجة التوافق",
+      "seekerPdfExports": "تصدير ملفات PDF بلا حدود",
+      "companyVerifiedProfile": "ملف شركة موثق",
+      "companyActiveListings": "نشر إعلانات وظائف نشطة",
+      "companyApplicantTracking": "متابعة أساسية للمتقدمين",
+      "companyAiJobDescriptions": "منشئ أوصاف وظيفية بالذكاء الاصطناعي",
+      "companyCandidateRanking": "ترتيب آلي لتوافق المرشحين بالذكاء الاصطناعي (0–100٪)",
+      "companyCandidateInsights": "ملخص نقاط قوة المرشحين والفجوات لديهم",
+      "companyInterviewQuestions": "أسئلة مقابلات مخصصة بالذكاء الاصطناعي"
     }
   },
   "jobs": {
@@ -247,6 +284,83 @@
     "passwordLength": "استخدم 8 أحرف على الأقل.",
     "passwordConfirmation": "كلمتا المرور غير متطابقتين.",
     "nameLength": "أدخل اسمًا من حرفين على الأقل."
+  },
+  "admin": {
+    "shell": {
+      "label": "لوحة الإدارة",
+      "navigation": "قائمة إدارة المنصة",
+      "roleBadge": "مشرف النظام",
+      "sidebarNote": "إدارة عمليات منصة CareerHub",
+      "logoutError": "تعذّر إكمال تسجيل الخروج، لكن تم مسح الجلسة المحلية."
+    },
+    "navigation": {
+      "overview": "نظرة عامة",
+      "usersCompanies": "الشركات والمستخدمون",
+      "catalog": "التخصصات والوظائف"
+    },
+    "placeholder": {
+      "eyebrow": "قريبًا",
+      "usersCompanies": {
+        "title": "الشركات والمستخدمون",
+        "body": "ستتوفر هنا في الخطوة الإدارية التالية أدوات البحث عن الحسابات وتوثيق الشركات وإدارة المستخدمين."
+      },
+      "catalog": {
+        "title": "التخصصات والوظائف",
+        "body": "ستتوفر هنا في الخطوة الإدارية التالية إدارة التخصصات والمسميات الوظيفية الموحدة."
+      }
+    },
+    "overview": {
+      "eyebrow": "إدارة المنصة",
+      "title": "نظرة عامة للمشرف",
+      "subtitle": "عرض مباشر للتسجيلات والفرص والطلبات والأنشطة الأخيرة في CareerHub.",
+      "refresh": "تحديث",
+      "loadError": "تعذّر تحميل إحصاءات المنصة. تحقّق من الاتصال ثم حاول مجددًا.",
+      "retry": "أعد المحاولة",
+      "metricsLabel": "إحصاءات منصة CareerHub"
+    },
+    "metrics": {
+      "seekers": "إجمالي الباحثين عن عمل",
+      "companies": "إجمالي الشركات",
+      "pendingVerifications": "طلبات توثيق معلّقة",
+      "activeJobs": "الوظائف النشطة",
+      "applications": "إجمالي طلبات التقديم",
+      "paidProTransactions": "عمليات Pro المدفوعة"
+    },
+    "activities": {
+      "eyebrow": "نبض المنصة",
+      "title": "أحدث الأنشطة",
+      "latestCount": "{{count}} أنشطة حديثة",
+      "emptyTitle": "لا توجد أنشطة حديثة بعد",
+      "emptyBody": "ستظهر هنا التسجيلات الجديدة وطلبات التقديم والوظائف المنشورة.",
+      "open": "مراجعة",
+      "types": {
+        "application": "طلب تقديم جديد",
+        "seeker_registered": "تسجيل باحث عن عمل جديد",
+        "company_registered": "تسجيل شركة جديدة",
+        "job_post_published": "نشر وظيفة جديدة",
+        "other": "تحديث في المنصة"
+      }
+    },
+    "summary": {
+      "eyebrow": "لمحة سريعة",
+      "title": "ملخص المنصة",
+      "averageMatch": "متوسط توافق الذكاء الاصطناعي",
+      "totalRevenue": "الإيرادات المدفوعة"
+    },
+    "actions": {
+      "manageUsers": "إدارة الشركات والمستخدمين",
+      "manageCatalog": "إدارة التخصصات والوظائف"
+    },
+    "notifications": {
+      "open": "فتح الإشعارات، {{count}} غير مقروء",
+      "title": "الإشعارات",
+      "unread": "{{count}} غير مقروء",
+      "markAllRead": "تحديد الكل كمقروء",
+      "emptyTitle": "لا توجد إشعارات جديدة",
+      "emptyBody": "ستظهر هنا إشعارات المنصة الجديدة.",
+      "loadError": "تعذّر تحميل الإشعارات.",
+      "updateError": "تعذّر تحديث حالة الإشعار."
+    }
   },
   "dashboard": {
     "welcome": "أهلًا {{name}}",
