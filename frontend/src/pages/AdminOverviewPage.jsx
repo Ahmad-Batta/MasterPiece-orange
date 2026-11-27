@@ -4,18 +4,7 @@ import { ArrowUpRight, BriefcaseBusiness, Building2, ChartNoAxesCombined, Circle
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
-
-function payloadOf(response) {
-  return response?.data?.data ?? {};
-}
-
-function listFrom(payload, keys = ['items', 'companies', 'data']) {
-  if (Array.isArray(payload)) return payload;
-  for (const key of keys) {
-    if (Array.isArray(payload?.[key])) return payload[key];
-  }
-  return [];
-}
+import { getApiData, getApiItems } from '../utils/apiResponse';
 
 function paginationTotal(payload) {
   const total = payload?.pagination?.total;
@@ -89,20 +78,20 @@ export default function AdminOverviewPage() {
     if (signal?.aborted) return;
 
     if (results[0].status === 'fulfilled') {
-      setStats(payloadOf(results[0].value));
+      setStats(getApiData(results[0].value));
     } else {
       setStats(null);
       setHasError(true);
     }
 
     if (results[1].status === 'fulfilled') {
-      setPendingVerifications(listFrom(payloadOf(results[1].value), ['items', 'companies', 'data']).length);
+      setPendingVerifications(getApiItems(getApiData(results[1].value), ['items', 'companies', 'data']).length);
     } else {
       setPendingVerifications(null);
     }
 
     if (results[2].status === 'fulfilled') {
-      setPaidTransactions(paginationTotal(payloadOf(results[2].value)));
+      setPaidTransactions(paginationTotal(getApiData(results[2].value)));
     } else {
       setPaidTransactions(null);
     }

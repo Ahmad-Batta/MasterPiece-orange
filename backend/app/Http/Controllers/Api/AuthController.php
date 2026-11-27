@@ -21,6 +21,8 @@ use Throwable;
 
 class AuthController extends Controller
 {
+    private const ACCOUNT_SUSPENDED_MESSAGE = 'Your account has been suspended. Please contact the platform support.';
+
     public function __construct(private readonly GoogleOAuthState $googleOAuthState) {}
 
     public function login(LoginRequest $request): JsonResponse
@@ -35,7 +37,16 @@ class AuthController extends Controller
         ] as $candidateRole => $modelClass) {
             $candidate = $modelClass::query()->where('email', $request->validated('email'))->first();
 
-            if ($candidate && $candidate->is_active && $candidate->password && Hash::check($request->validated('password'), $candidate->password)) {
+            if ($candidate && $candidate->password && Hash::check($request->validated('password'), $candidate->password)) {
+                if (! $candidate->is_active) {
+                    return response()->json([
+                        'status' => 'error',
+                        'code' => 'ACCOUNT_SUSPENDED',
+                        'message' => self::ACCOUNT_SUSPENDED_MESSAGE,
+                        'errors' => [],
+                    ], 403);
+                }
+
                 $account = $candidate;
                 $role = $candidateRole;
                 break;
@@ -151,7 +162,16 @@ class AuthController extends Controller
             }
 
             if ($account && ! $account->is_active) {
-                throw new \RuntimeException('This account is inactive.');
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'code' => 'ACCOUNT_SUSPENDED',
+                        'message' => self::ACCOUNT_SUSPENDED_MESSAGE,
+                        'errors' => [],
+                    ], 403);
+                }
+
+                return redirect()->away($frontendUrl.'/login?error=suspended');
             }
 
             if (! $account) {

@@ -34,6 +34,16 @@
 - Read and follow `UI_UX_RULES.md` for every page and component. Its palette, spacing, typography, component styling, responsive behavior, and interaction states are mandatory.
 - Do not introduce colors or styles prohibited by `UI_UX_RULES.md`.
 
+## Code Reuse, Anti-Redundancy & Performance Hygiene
+- **Search Before Create:** Inspect `frontend/src/components/`, `frontend/src/layouts/`, and `frontend/src/utils/` before adding a component, modal, or helper. Reuse or extend an existing module where it fits.
+- **DRY Locales:** Keep shared UI labels such as `save`, `cancel`, `edit`, `delete`, `create`, `search`, `loading`, `actions`, `status`, `close`, and `confirm` under `common.*` in both locale files. Page-specific wording stays with its feature namespace.
+- **Single API Client:** Make all frontend HTTP requests through `frontend/src/api/axios.js`; do not create separate Axios instances or call `fetch` for API requests.
+- **Zero Bloat:** Do not install npm or Composer packages without explicit approval. Remove unused imports and safely confirmed dead files as part of the change that makes them obsolete.
+- **Reusable Frontend Inventory:**
+  - `frontend/src/components/`: `AuthVisualPanel` (shared authentication photography panel), `Button` (shared button states), `Footer` (public site footer), `FormField` (labeled form control), `GoogleAuthLink` (Google OAuth entry), `JobCard` and `JobCardSkeleton` (job result and loading card), `LanguageSwitcher` (bilingual toggle), `Navbar` (public navigation), `ProtectedRoute` (role guard), `ModalShell` (animated modal backdrop and dismissal), and `PaginationBar` (compact paginated navigation).
+  - `frontend/src/layouts/`: `DashboardLayout` (authenticated dashboard sidebar and topbar shell).
+  - `frontend/src/utils/`: `apiResponse.js` (API envelope and list extraction), `validationErrors.js` (Laravel 422 field-error extraction and normalization).
+
 ## General Working Rules
 - Make focused changes that support the requested task and preserve existing project conventions.
 - Do not expose credentials, tokens, or other secrets in source files or output.

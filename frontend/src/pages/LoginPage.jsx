@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight, LockKeyhole } from 'lucide-react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
@@ -9,6 +9,7 @@ import GoogleAuthLink from '../components/GoogleAuthLink';
 import AuthVisualPanel from '../components/AuthVisualPanel';
 import { dashboardPath, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getValidationErrors } from '../utils/validationErrors';
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -16,14 +17,26 @@ export default function LoginPage() {
   const { notify } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
+  const [accountSuspended, setAccountSuspended] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     document.title = t('auth.loginTitle');
   }, [t]);
+
+  useEffect(() => {
+    if (searchParams.get('error') !== 'suspended') return;
+    setAccountSuspended(true);
+    setErrors({});
+    setMessage('');
+    const cleanParams = new URLSearchParams(searchParams);
+    cleanParams.delete('error');
+    setSearchParams(cleanParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   if (!isLoading && session) return <Navigate to={dashboardPath(session.role)} replace />;
 
@@ -31,6 +44,7 @@ export default function LoginPage() {
     setValues((current) => ({ ...current, [field]: event.target.value }));
     setErrors((current) => ({ ...current, [field]: '' }));
     setMessage('');
+    setAccountSuspended(false);
   };
 
   const submit = async (event) => {
@@ -48,20 +62,25 @@ export default function LoginPage() {
     setSubmitting(true);
     setErrors({});
     setMessage('');
+    setAccountSuspended(false);
     try {
       const nextSession = await login(values);
       notify(t('auth.loginSuccess'));
       const requestedPath = location.state?.from;
       navigate(requestedPath || dashboardPath(nextSession.role), { replace: true });
     } catch (error) {
-      if (error.response?.status === 422) {
-        const fields = error.response.data?.errors || {};
-        setErrors(Object.fromEntries(Object.keys(fields).map((field) => [field, t('auth.reviewFields')])));
+      if (error.response?.status === 403 || error.response?.data?.code === 'ACCOUNT_SUSPENDED') {
+        setErrors({});
+        setMessage('');
+        setAccountSuspended(true);
+      } else if (error.response?.status === 422) {
+        setErrors(getValidationErrors(error, { messageForField: () => t('auth.reviewFields') }));
         setMessage(t('auth.reviewFields'));
+        notify(t('auth.invalidCredentials'), 'error');
       } else {
         setMessage(t('auth.invalidCredentials'));
+        notify(t('auth.invalidCredentials'), 'error');
       }
-      notify(t('auth.invalidCredentials'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -78,6 +97,24 @@ export default function LoginPage() {
               <p className="mx-auto mt-3 max-w-prose text-sm leading-relaxed text-[#1C221E] sm:text-base">{t('auth.loginBody')}</p>
             </div>
             <p className="mb-6 rounded-lg border border-[#E5E2D9] bg-[#FAF9F5] p-4 text-sm leading-relaxed text-[#1C221E]">{t('auth.unifiedNote')}</p>
+            <AnimatePresence initial={false}>
+              {accountSuspended && (
+                <motion.section
+                  key="account-suspended"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                  className="mb-5 rounded-xl border border-[#E6D7C8] bg-[#F5EFEA] p-4 text-start text-[#8E6B4D]"
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  <h2 className="text-sm font-semibold">{t('auth.accountSuspendedTitle')}</h2>
+                  <p className="mt-1 text-sm leading-relaxed">{t('auth.accountSuspendedMessage')}</p>
+                  <a className="mt-2 inline-flex h-8 items-center whitespace-nowrap text-xs font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" href="mailto:support@careerhub.io">{t('auth.contactPlatformSupport')}</a>
+                </motion.section>
+              )}
+            </AnimatePresence>
             <form className="flex flex-col space-y-3.5" onSubmit={submit} noValidate>
               <FormField label={t('auth.email')} name="email" type="email" autoComplete="email" placeholder={t('auth.emailPlaceholder')} value={values.email} onChange={update('email')} error={errors.email} required />
               <FormField label={t('auth.password')} name="password" type="password" autoComplete="current-password" placeholder={t('auth.passwordPlaceholder')} value={values.password} onChange={update('password')} error={errors.password} required />

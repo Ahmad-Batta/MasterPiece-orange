@@ -9,6 +9,7 @@ import GoogleAuthLink from '../components/GoogleAuthLink';
 import AuthVisualPanel from '../components/AuthVisualPanel';
 import { dashboardPath, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getValidationErrors } from '../utils/validationErrors';
 
 function validRole(role) {
   return role === 'company' ? 'company' : 'seeker';
@@ -70,8 +71,7 @@ export default function RegisterPage() {
       navigate(dashboardPath(nextSession.role), { replace: true });
     } catch (error) {
       if (error.response?.status === 422) {
-        const fields = error.response.data?.errors || {};
-        setErrors(Object.fromEntries(Object.keys(fields).map((field) => [field, t('auth.reviewFields')])));
+        setErrors(getValidationErrors(error, { messageForField: () => t('auth.reviewFields') }));
         setMessage(t('auth.reviewFields'));
       } else {
         setMessage(t('auth.requestFailed'));

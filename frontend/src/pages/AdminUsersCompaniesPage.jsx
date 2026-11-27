@@ -1,23 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BadgeCheck, Building2, Check, ChevronLeft, ChevronRight, CircleAlert, LoaderCircle, RefreshCw, Search, ShieldCheck, UserRound, UsersRound, X } from 'lucide-react';
+import { BadgeCheck, Building2, Check, CircleAlert, LoaderCircle, Pencil, Plus, RefreshCw, Search, ShieldCheck, UserRound, UsersRound, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import ModalShell from '../components/ModalShell';
+import PaginationBar from '../components/PaginationBar';
+import { getApiData, getApiItems } from '../utils/apiResponse';
+import { getValidationErrors } from '../utils/validationErrors';
 
 const fieldClass = 'h-10 w-full rounded-lg border border-[#E5E2DC] bg-white px-4 text-sm text-[#1C221E] transition-colors duration-150 placeholder:text-[#7A827C] focus:border-[#A37E5E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]';
 const compactButton = 'inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#E5E2DC] bg-white px-3 text-xs font-medium text-[#2B362E] transition-colors duration-150 hover:bg-[#FAF9F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
-
-function payloadOf(response) {
-  return response?.data?.data ?? {};
-}
-
-function listOf(payload) {
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.data)) return payload.data;
-  return Array.isArray(payload) ? payload : [];
-}
 
 function SkeletonRows() {
   return (
@@ -46,20 +40,162 @@ function StatusPill({ tone, children }) {
   return <span className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-wide ${palette[tone]}`}>{children}</span>;
 }
 
-function Pagination({ page, lastPage, onChange, t, disabled }) {
-  if (lastPage < 2) return null;
+function AccountModal({ mode, account, defaultRole, ownAccount, onClose, onSubmit, t }) {
+  const isEditing = mode === 'edit';
+  const initialValues = {
+    role: account?.role || defaultRole || 'seeker',
+    name: account?.company_name || account?.name || '',
+    email: account?.email || '',
+    password: '',
+    industry: account?.industry || account?.company_profile?.industry || '',
+    description: account?.description || account?.company_profile?.description || '',
+    location: account?.location || account?.company_profile?.location || '',
+    major: account?.major || '',
+    status: account?.is_active === false ? 'inactive' : 'active',
+  };
+  const [values, setValues] = useState(initialValues);
+  const [errors, setErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const updateValue = (field) => (event) => {
+    setValues((current) => ({ ...current, [field]: event.target.value }));
+    setErrors((current) => ({ ...current, [field]: '' }));
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const nextErrors = {};
+    if (!values.name.trim()) nextErrors.name = t('admin.usersCompanies.modal.required');
+    if (!values.email.trim()) nextErrors.email = t('admin.usersCompanies.modal.required');
+    else if (!/^\S+@\S+\.\S+$/.test(values.email.trim())) nextErrors.email = t('admin.usersCompanies.modal.emailInvalid');
+    if (!isEditing && values.password.length < 8) nextErrors.password = t('admin.usersCompanies.modal.passwordLength');
+    if (isEditing && values.password && values.password.length < 8) nextErrors.password = t('admin.usersCompanies.modal.passwordLength');
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await onSubmit({ ...values, name: values.name.trim(), email: values.email.trim() });
+      if (result?.fieldErrors) setErrors(result.fieldErrors);
+      else if (result?.ok) onClose();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const field = (name, label, options = {}) => (
+    <label className="block text-xs font-medium text-[#1C221E]" htmlFor={`account-${name}`}>
+      {label}{options.required && <span aria-hidden="true"> *</span>}
+      {options.multiline ? (
+        <textarea
+          id={`account-${name}`}
+          className="mt-1 block min-h-20 w-full resize-y rounded-lg border border-[#E5E2DC] bg-white px-4 py-2 text-sm text-[#1C221E] transition-colors duration-150 focus:border-[#A37E5E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]"
+          value={values[name]}
+          onChange={updateValue(name)}
+          disabled={isSaving}
+          dir="auto"
+          aria-invalid={Boolean(errors[name])}
+          aria-describedby={errors[name] ? `account-${name}-error` : undefined}
+        />
+      ) : (
+        <input
+          id={`account-${name}`}
+          className={`mt-1 ${fieldClass} ${errors[name] ? 'border-[#B91C1C] focus:border-[#B91C1C] focus-visible:ring-[#B91C1C]' : ''}`}
+          type={options.type || 'text'}
+          value={values[name]}
+          onChange={updateValue(name)}
+          disabled={isSaving}
+          required={options.required}
+          autoComplete={options.autoComplete}
+          placeholder={options.placeholder}
+          dir="auto"
+          aria-invalid={Boolean(errors[name])}
+          aria-describedby={errors[name] ? `account-${name}-error` : undefined}
+        />
+      )}
+      {errors[name] && <span id={`account-${name}-error`} className="mt-1 block text-xs text-[#B91C1C]">{errors[name]}</span>}
+    </label>
+  );
+
   return (
-    <div className="flex items-center justify-between gap-4 border-t border-[#E5E2DC] pt-4">
-      <p className="tabular-nums text-xs text-[#4A544D]">{t('admin.usersCompanies.page', { current: page, total: lastPage })}</p>
-      <div className="flex gap-2">
-        <button className={compactButton} type="button" onClick={() => onChange(page - 1)} disabled={disabled || page <= 1} aria-label={t('admin.usersCompanies.previousPage')}>
-          <ChevronLeft className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" />{t('admin.usersCompanies.previous')}
-        </button>
-        <button className={compactButton} type="button" onClick={() => onChange(page + 1)} disabled={disabled || page >= lastPage} aria-label={t('admin.usersCompanies.nextPage')}>
-          {t('admin.usersCompanies.next')}<ChevronRight className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" />
-        </button>
-      </div>
-    </div>
+    <ModalShell className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-[#1C221E]/45 p-4" onClose={onClose} canClose={!isSaving}>
+      <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-modal-title"
+        className="my-auto w-full max-w-lg rounded-xl border border-[#E5E2D9] bg-white p-6 shadow-sm"
+        initial={{ opacity: 0, y: 8, scale: 0.99 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 5, scale: 0.99 }}
+        transition={{ duration: 0.18 }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="account-modal-title" className="text-base font-semibold text-[#1C221E]">{t(isEditing ? 'admin.usersCompanies.modal.editTitle' : 'admin.usersCompanies.modal.createTitle')}</h2>
+            <p className="mt-1 max-w-prose text-xs leading-relaxed text-[#1C221E]/70">{t(isEditing ? 'admin.usersCompanies.modal.editBody' : 'admin.usersCompanies.modal.createBody')}</p>
+          </div>
+          <button className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[#2B362E] transition-colors duration-150 hover:bg-[#FAF9F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] disabled:cursor-not-allowed disabled:opacity-50" type="button" onClick={onClose} disabled={isSaving} aria-label={t('common.close')}>
+            <X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        </div>
+
+        <form className="mt-5 space-y-3.5" onSubmit={submit} noValidate>
+          {!isEditing ? (
+            <label className="block text-xs font-medium text-[#1C221E]" htmlFor="account-role">
+              {t('admin.usersCompanies.modal.roleLabel')}<span aria-hidden="true"> *</span>
+              <select id="account-role" className={`mt-1 ${fieldClass} ${errors.role ? 'border-[#B91C1C]' : ''}`} value={values.role} onChange={updateValue('role')} disabled={isSaving} aria-invalid={Boolean(errors.role)}>
+                <option value="seeker">{t('admin.usersCompanies.roles.seeker')}</option>
+                <option value="company">{t('admin.usersCompanies.roles.company')}</option>
+              </select>
+              {errors.role && <span className="mt-1 block text-xs text-[#B91C1C]">{errors.role}</span>}
+            </label>
+          ) : (
+            <div className="rounded-lg border border-[#E5E2D9] bg-[#FAF9F5] px-3 py-2 text-xs text-[#1C221E]">
+              <span className="font-medium">{t('admin.usersCompanies.modal.roleLabel')}: </span>{t(`admin.usersCompanies.roles.${values.role}`)}
+            </div>
+          )}
+
+          {!isEditing && <p className="rounded-lg border border-[#E5E2D9] bg-[#FAF9F5] p-3 text-xs leading-relaxed text-[#1C221E]/75">{t('admin.usersCompanies.modal.adminCreateNote')}</p>}
+          {isEditing && <p className="rounded-lg border border-[#E5E2D9] bg-[#FAF9F5] p-3 text-xs leading-relaxed text-[#1C221E]/75">{t('admin.usersCompanies.modal.optionalProfileHint')}</p>}
+          {field('name', t('admin.usersCompanies.modal.nameLabel'), { required: true, placeholder: t('admin.usersCompanies.modal.namePlaceholder'), autoComplete: 'name' })}
+          {field('email', t('admin.usersCompanies.modal.emailLabel'), { required: true, type: 'email', placeholder: t('admin.usersCompanies.modal.emailPlaceholder'), autoComplete: 'email' })}
+          {field('password', t(isEditing ? 'admin.usersCompanies.modal.newPasswordLabel' : 'admin.usersCompanies.modal.passwordLabel'), { required: !isEditing, type: 'password', placeholder: t(isEditing ? 'admin.usersCompanies.modal.newPasswordPlaceholder' : 'admin.usersCompanies.modal.passwordPlaceholder'), autoComplete: isEditing ? 'new-password' : 'new-password' })}
+
+          {values.role === 'company' ? (
+            <>
+              {field('industry', t('admin.usersCompanies.modal.industryLabel'), { placeholder: t('admin.usersCompanies.modal.industryPlaceholder') })}
+              {field('description', t('admin.usersCompanies.modal.descriptionLabel'), { multiline: true })}
+              {field('location', t('admin.usersCompanies.modal.locationLabel'), { placeholder: t('admin.usersCompanies.modal.locationPlaceholder') })}
+            </>
+          ) : values.role === 'seeker' ? (
+            <>
+              {field('major', t('admin.usersCompanies.modal.majorLabel'), { placeholder: t('admin.usersCompanies.modal.majorPlaceholder') })}
+              {field('location', t('admin.usersCompanies.modal.locationLabel'), { placeholder: t('admin.usersCompanies.modal.locationPlaceholder') })}
+            </>
+          ) : null}
+
+          {isEditing && !ownAccount && (
+            <label className="block text-xs font-medium text-[#1C221E]" htmlFor="account-status">
+              {t('admin.usersCompanies.modal.statusLabel')}
+              <select id="account-status" className={`mt-1 ${fieldClass}`} value={values.status} onChange={updateValue('status')} disabled={isSaving}>
+                <option value="active">{t('admin.usersCompanies.accountStatuses.active')}</option>
+                <option value="inactive">{t('admin.usersCompanies.accountStatuses.inactive')}</option>
+              </select>
+            </label>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <button className={compactButton} type="button" onClick={onClose} disabled={isSaving}>{t('common.cancel')}</button>
+            <button className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#2B362E] px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#1F2822] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={isSaving}>
+              {isSaving ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.75} aria-hidden="true" /> : <Check className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}
+              {t(isEditing ? 'common.save' : 'admin.usersCompanies.modal.createAction')}
+            </button>
+          </div>
+        </form>
+      </motion.section>
+    </ModalShell>
   );
 }
 
@@ -81,6 +217,7 @@ export default function AdminUsersCompaniesPage() {
   const [loadError, setLoadError] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [feedback, setFeedback] = useState('');
+  const [accountModal, setAccountModal] = useState(null);
   const [query, setQuery] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
 
@@ -100,8 +237,8 @@ export default function AdminUsersCompaniesPage() {
     ]);
     if (signal?.aborted) return;
     setCounts((current) => ({
-      companies: results[0].status === 'fulfilled' ? Number(payloadOf(results[0].value).pagination?.total ?? 0) : current.companies,
-      users: results[1].status === 'fulfilled' ? Number(payloadOf(results[1].value).pagination?.total ?? 0) : current.users,
+      companies: results[0].status === 'fulfilled' ? Number(getApiData(results[0].value).pagination?.total ?? 0) : current.companies,
+      users: results[1].status === 'fulfilled' ? Number(getApiData(results[1].value).pagination?.total ?? 0) : current.users,
     }));
   }, []);
 
@@ -116,8 +253,8 @@ export default function AdminUsersCompaniesPage() {
     setLoadError(false);
     try {
       const companyResponse = await api.get('/admin/users', { params: { role: 'company', search: query || undefined, per_page: 100, page }, signal });
-      const companyPayload = payloadOf(companyResponse);
-      const merged = listOf(companyPayload).map((company) => {
+      const companyPayload = getApiData(companyResponse);
+      const merged = getApiItems(companyPayload).map((company) => {
         const profile = company.company_profile ?? {};
         return {
           ...company,
@@ -147,7 +284,7 @@ export default function AdminUsersCompaniesPage() {
     try {
       const { data } = await api.get('/admin/users', { params, signal });
       const payload = data?.data ?? {};
-      setUsers(listOf(payload));
+      setUsers(getApiItems(payload));
       setLastPage(Number(payload.pagination?.last_page ?? 1));
       setCounts((current) => ({ ...current, users: Number(payload.pagination?.total ?? current.users ?? 0) }));
     } catch (error) {
@@ -225,6 +362,88 @@ export default function AdminUsersCompaniesPage() {
     }
   };
 
+  const saveAccount = async (values) => {
+    const isEditing = accountModal?.mode === 'edit';
+    const role = isEditing ? accountModal.account.role : values.role;
+    const payload = { role, name: values.name, email: values.email };
+    if (values.password) payload.password = values.password;
+    if (isEditing) {
+      if (!accountModal.ownAccount) payload.status = values.status;
+      if (role === 'company') {
+        for (const fieldName of ['industry', 'description', 'location']) {
+          if (values[fieldName].trim()) payload[fieldName] = values[fieldName].trim();
+        }
+      }
+      if (role === 'seeker') {
+        for (const fieldName of ['major', 'location']) {
+          if (values[fieldName].trim()) payload[fieldName] = values[fieldName].trim();
+        }
+      }
+    } else {
+      payload.password = values.password;
+      if (role === 'company') {
+        for (const fieldName of ['industry', 'description', 'location']) {
+          if (values[fieldName].trim()) payload[fieldName] = values[fieldName].trim();
+        }
+      }
+      if (role === 'seeker') {
+        for (const fieldName of ['major', 'location']) {
+          if (values[fieldName].trim()) payload[fieldName] = values[fieldName].trim();
+        }
+      }
+    }
+
+    try {
+      const accountId = role === 'company' ? accountModal?.account?.company_profile?.id ?? accountModal?.account?.id : accountModal?.account?.id;
+      const response = isEditing
+        ? await api.patch(`/admin/users/${accountId}`, payload)
+        : await api.post('/admin/users', payload);
+      const saved = getApiData(response);
+      if (isEditing) {
+        const active = saved.is_active ?? values.status === 'active';
+        const applyUpdate = (items) => items.map((item) => String(item.id) === String(accountId) && item.role === role ? {
+          ...item,
+          ...saved,
+          id: item.id,
+          role,
+          name: values.name,
+          email: values.email,
+          is_active: accountModal.ownAccount ? item.is_active : active,
+          ...(role === 'company' ? {
+            company_name: values.name,
+            industry: values.industry,
+            company_profile: { ...item.company_profile, ...saved, id: accountId, company_name: values.name, industry: values.industry, description: values.description, location: values.location },
+          } : { major: values.major, location: values.location }),
+        } : item);
+        setUsers(applyUpdate);
+        setCompanies(applyUpdate);
+      } else {
+        setTab(role === 'company' ? 'companies' : 'users');
+        setRole(role === 'company' ? 'all' : role);
+        setCompanyStatus('all');
+        setAccountStatus('all');
+        setSearch('');
+        setQuery('');
+        setPage(1);
+      }
+      const key = isEditing ? 'updated' : 'created';
+      const message = t(`admin.usersCompanies.modal.${key}`);
+      setFeedback(message);
+      notify(message);
+      loadCounts();
+      if (!isEditing) setLoadAttempt((attempt) => attempt + 1);
+      return { ok: true };
+    } catch (error) {
+      const fieldErrors = getValidationErrors(error, { fallbackMessage: t('admin.usersCompanies.modal.validationError') });
+      if (fieldErrors) return { fieldErrors };
+      notify(t('admin.usersCompanies.actionError'), 'error');
+      return { ok: false };
+    }
+  };
+
+  const openCreateModal = () => setAccountModal({ mode: 'create', defaultRole: tab === 'companies' ? 'company' : 'seeker' });
+  const openEditModal = (account) => setAccountModal({ mode: 'edit', account, ownAccount: isSelf(account) });
+
   const isSelf = (account) => account.role === 'admin' && String(account.id) === String(user?.id);
   const activeList = tab === 'companies' ? filteredCompanies : users;
   const tabButton = (target, Icon, count) => (
@@ -245,10 +464,15 @@ export default function AdminUsersCompaniesPage() {
 
   return (
     <section className="space-y-6" aria-labelledby="admin-users-title">
-      <header className="rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-sm">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-[#A37E5E]">{t('admin.usersCompanies.eyebrow')}</p>
-        <h1 id="admin-users-title" className="text-xl font-semibold text-[#1C221E] sm:text-2xl">{t('admin.usersCompanies.title')}</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-[#4A544D]">{t('admin.usersCompanies.subtitle')}</p>
+      <header className="flex flex-col gap-4 rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="mb-2 text-xs font-semibold tracking-wide text-[#A37E5E]">{t('admin.usersCompanies.eyebrow')}</p>
+          <h1 id="admin-users-title" className="text-xl font-semibold text-[#1C221E] sm:text-2xl">{t('admin.usersCompanies.title')}</h1>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-[#4A544D]">{t('admin.usersCompanies.subtitle')}</p>
+        </div>
+        <button className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 self-start whitespace-nowrap rounded-lg bg-[#2B362E] px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#1F2822] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto" type="button" onClick={openCreateModal}>
+          <Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('admin.usersCompanies.modal.addAccount')}
+        </button>
       </header>
 
       <AnimatePresence initial={false}>
@@ -268,7 +492,7 @@ export default function AdminUsersCompaniesPage() {
       <div className="rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-xs font-medium text-[#1C221E]" htmlFor="admin-users-search">
-            {t('admin.usersCompanies.searchLabel')}
+            {t('common.search')}
             <span className="relative mt-1 block">
               <Search className="pointer-events-none absolute start-3 top-3 h-4 w-4 text-[#7A827C]" strokeWidth={1.75} aria-hidden="true" />
               <input id="admin-users-search" className={`${fieldClass} ps-9`} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t(tab === 'companies' ? 'admin.usersCompanies.companySearchPlaceholder' : 'admin.usersCompanies.userSearchPlaceholder')} />
@@ -320,7 +544,7 @@ export default function AdminUsersCompaniesPage() {
                     <th className="px-4 py-3 font-semibold text-start">{t('admin.usersCompanies.columns.account')}</th>
                     <th className="px-4 py-3 font-semibold text-start">{tab === 'companies' ? t('admin.usersCompanies.columns.focus') : t('admin.usersCompanies.columns.role')}</th>
                     <th className="px-4 py-3 font-semibold text-start">{t(tab === 'companies' ? 'admin.usersCompanies.columns.verification' : 'admin.usersCompanies.columns.status')}</th>
-                    <th className="px-4 py-3 font-semibold text-start">{t('admin.usersCompanies.columns.actions')}</th>
+                    <th className="px-4 py-3 font-semibold text-start">{t('common.actions')}</th>
                   </tr></thead>
                   <tbody className="divide-y divide-[#E5E2DC]">
                     {activeList.map((account) => {
@@ -342,6 +566,9 @@ export default function AdminUsersCompaniesPage() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap items-center gap-2">
+                              <button className={compactButton} type="button" onClick={() => openEditModal(account)} disabled={isBusy}>
+                                <Pencil className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.edit')}
+                              </button>
                               {isCompany && <>
                                 <button className={`${compactButton} border-[#2B362E] bg-[#2B362E] text-white hover:bg-[#1F2822]`} type="button" onClick={() => updateCompany(account, 'verified')} disabled={isBusy || isVerified}>
                                   {isBusy ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.75} aria-hidden="true" /> : <BadgeCheck className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}{t(isPending ? 'admin.usersCompanies.approve' : 'admin.usersCompanies.verify')}
@@ -368,12 +595,15 @@ export default function AdminUsersCompaniesPage() {
                 </table>
               </div>
               <div className="mt-4">
-                <Pagination page={page} lastPage={lastPage} onChange={setPage} t={t} disabled={isLoading} />
+                <PaginationBar page={page} lastPage={lastPage} onChange={setPage} disabled={isLoading} labels={{ page: (current, total) => t('admin.usersCompanies.page', { current, total }), previous: t('admin.usersCompanies.previous'), next: t('admin.usersCompanies.next'), previousPage: t('admin.usersCompanies.previousPage'), nextPage: t('admin.usersCompanies.nextPage') }} />
               </div>
             </>
           )}
         </div>
       </div>
+      <AnimatePresence>
+        {accountModal && <AccountModal key={`${accountModal.mode}-${accountModal.account?.role || accountModal.defaultRole}-${accountModal.account?.id || 'new'}`} mode={accountModal.mode} account={accountModal.account} defaultRole={accountModal.defaultRole} ownAccount={accountModal.ownAccount} onClose={() => setAccountModal(null)} onSubmit={saveAccount} t={t} />}
+      </AnimatePresence>
     </section>
   );
 }

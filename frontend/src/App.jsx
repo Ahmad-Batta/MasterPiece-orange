@@ -6,7 +6,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminOverviewPage from './pages/AdminOverviewPage';
 import AdminUsersCompaniesPage from './pages/AdminUsersCompaniesPage';
-import AdminPlaceholderPage from './pages/AdminPlaceholderPage';
+import AdminCatalogJobsPage from './pages/AdminCatalogJobsPage';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -39,7 +39,7 @@ function ApplicationRoutes() {
         <Route path="/admin" element={<ProtectedRoute role="admin"><DashboardLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<AdminOverviewPage />} />
           <Route path="users-companies" element={<AdminUsersCompaniesPage />} />
-          <Route path="catalog" element={<AdminPlaceholderPage section="catalog" />} />
+          <Route path="catalog" element={<AdminCatalogJobsPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
