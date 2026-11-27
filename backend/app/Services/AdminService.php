@@ -85,7 +85,20 @@ class AdminService
             $rows = $rows->merge(Seeker::query()->get(['seeker_id', 'first name', 'last name', 'email', 'is_active', 'created at'])->map(fn (Seeker $u) => ['id' => $u->seeker_id, 'name' => trim($u->{'first name'}.' '.$u->{'last name'}), 'email' => $u->email, 'role' => 'seeker', 'is_active' => (bool) $u->is_active, 'created_at' => $u->{'created at'}]));
         }
         if (! isset($filters['role']) || $filters['role'] === 'company') {
-            $rows = $rows->merge(Company::query()->get(['company_id', 'company_name', 'email', 'is_active', 'created_at'])->map(fn (Company $u) => ['id' => $u->company_id, 'name' => $u->company_name, 'email' => $u->email, 'role' => 'company', 'is_active' => (bool) $u->is_active, 'created_at' => $u->created_at]));
+            $rows = $rows->merge(Company::query()->get(['company_id', 'company_name', 'email', 'industry', 'verification_status', 'is_active', 'created_at'])->map(fn (Company $u) => [
+                'id' => $u->company_id,
+                'name' => $u->company_name,
+                'email' => $u->email,
+                'role' => 'company',
+                'is_active' => (bool) $u->is_active,
+                'created_at' => $u->created_at,
+                'company_profile' => [
+                    'id' => $u->company_id,
+                    'company_name' => $u->company_name,
+                    'industry' => $u->industry,
+                    'verification_status' => $u->verification_status,
+                ],
+            ]));
         }
         $rows = $rows->filter(function (array $row) use ($filters): bool {
             $searchMatches = empty($filters['search']) || str_contains(mb_strtolower($row['name'].' '.$row['email']), mb_strtolower($filters['search']));

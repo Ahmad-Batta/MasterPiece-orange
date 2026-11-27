@@ -42,10 +42,6 @@ class AdminController extends Controller
     public function verifyCompany(VerifyCompanyRequest $request, int $id): JsonResponse
     {
         $company = Company::query()->findOrFail($id);
-        if ($company->verification_status !== 'pending') {
-            return ApiResponse::error('Only pending verification requests can be reviewed.', ['verification_status' => ['Company is not pending.']], 409);
-        }
-
         $company = $this->adminService->verifyCompany($company, $request->validated('verification_status'));
 
         return ApiResponse::success((new CompanyResource($company))->resolve(), 'Company verification status updated.');

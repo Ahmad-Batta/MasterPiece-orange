@@ -5,6 +5,7 @@ import { MotionConfig } from 'motion/react';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminOverviewPage from './pages/AdminOverviewPage';
+import AdminUsersCompaniesPage from './pages/AdminUsersCompaniesPage';
 import AdminPlaceholderPage from './pages/AdminPlaceholderPage';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -37,7 +38,7 @@ function ApplicationRoutes() {
         <Route path="/company/dashboard" element={<ProtectedRoute role="company"><DashboardPage role="company" /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute role="admin"><DashboardLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<AdminOverviewPage />} />
-          <Route path="users-companies" element={<AdminPlaceholderPage section="usersCompanies" />} />
+          <Route path="users-companies" element={<AdminUsersCompaniesPage />} />
           <Route path="catalog" element={<AdminPlaceholderPage section="catalog" />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
