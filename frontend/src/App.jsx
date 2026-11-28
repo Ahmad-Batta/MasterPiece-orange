@@ -24,6 +24,7 @@ const SeekerSettingsPage = lazy(() => import('./pages/SeekerSettingsPage'));
 const SeekerCvBuilderPage = lazy(() => import('./pages/SeekerCvBuilderPage'));
 const CompanyJobsPage = lazy(() => import('./pages/CompanyJobsPage'));
 const CompanyProfilePage = lazy(() => import('./pages/CompanyProfilePage'));
+const CompanyApplicantsPage = lazy(() => import('./pages/CompanyApplicantsPage'));
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -73,6 +74,7 @@ function ApplicationRoutes() {
         <Route path="/company/dashboard" element={<ProtectedRoute role="company"><DashboardPage role="company" /></ProtectedRoute>} />
         <Route path="/company/jobs" element={<ProtectedRoute role="company"><CompanyJobsPage /></ProtectedRoute>} />
         <Route path="/company/profile" element={<ProtectedRoute role="company"><CompanyProfilePage /></ProtectedRoute>} />
+        <Route path="/company/applicants" element={<ProtectedRoute role="company"><CompanyApplicantsPage /></ProtectedRoute>} />
         <Route path="/payments/success" element={<PaymentReturn status="returned" />} />
         <Route path="/payments/cancelled" element={<PaymentReturn status="cancelled" />} />
         <Route path="/admin" element={<ProtectedRoute role="admin"><DashboardLayout /></ProtectedRoute>}>

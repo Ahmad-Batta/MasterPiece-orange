@@ -55,6 +55,7 @@ export default function DashboardPage({ role }) {
             <ArrowUpRight className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" />
           </Link>
           {role === 'company' && <Link className="button-secondary mt-3 self-start" to="/company/jobs">{t('dashboard.companyJobsLink')}</Link>}
+          {role === 'company' && <Link className="button-secondary mt-3 self-start" to="/company/applicants">{t('companyApplicants.title')}</Link>}
         </section>
 
         <aside className="surface-card flex flex-col justify-between">
