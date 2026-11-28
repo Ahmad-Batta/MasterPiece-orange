@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JobPostRequest;
 use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Http\Requests\UpdateCompanyProfileRequest;
+use App\Http\Requests\WriteJobDescriptionRequest;
 use App\Http\Resources\ApplicationResource;
 use App\Http\Resources\CompanyResource;
 use App\Http\Resources\JobPostResource;
+use App\Services\AIInsightsService;
 use App\Services\CompanyService;
 use App\Services\JobService;
 use App\Support\ApiResponse;
@@ -20,6 +22,7 @@ class CompanyController extends Controller
     public function __construct(
         private readonly CompanyService $companyService,
         private readonly JobService $jobService,
+        private readonly AIInsightsService $insightsService,
     ) {}
 
     public function profile(Request $request): JsonResponse
@@ -55,6 +58,11 @@ class CompanyController extends Controller
             'items' => $items,
             'pagination' => ['current_page' => $jobs->currentPage(), 'last_page' => $jobs->lastPage(), 'total' => $jobs->total()],
         ]);
+    }
+
+    public function writeJobDescription(WriteJobDescriptionRequest $request): JsonResponse
+    {
+        return ApiResponse::success($this->insightsService->writeJobDescription($request->user(), $request->validated()));
     }
 
     public function storeJob(JobPostRequest $request): JsonResponse

@@ -17,6 +17,15 @@ Use `platform_settings` to configure free AI allowances by role. Give users a us
 - **Job seekers** pay for AI CV generation and enhancement, extended CV auto-fill, polished PDF export, and higher match visibility. Keep ranking based on genuine fit and make any paid visibility clear.
 - **Companies** pay for the value of a credible verified employer presence, publishing beyond free job limits, AI job description generation, and AI candidate ranking and shortlisting. Verification must be earned through the verification process.
 
+### Company Pro AI value pillars
+
+1. **AI Job Description Writer (كتابة وصف الوظيفة بالـ AI):** drafts a role description and requirements for company review before publishing.
+2. **AI Auto-Screening & Candidate Ranking (الفرز والترتيب التلقائي للمتقدمين):** ranks applicants by evidence-based fit.
+3. **AI Candidate Strengths & Weaknesses Summary (ملخص نقاط القوة والضعف لكل مرشح):** shows the reasons behind each match.
+4. **Tailored AI Interview Questions per Candidate (أسئلة مقابلة مخصصة لكل مرشح):** generates relevant screening questions.
+
+Each new AI action must use the shared company AI quota. Exhausted free usage returns the standard `402 AI_QUOTA_EXCEEDED` response so the existing `UpgradeModal` offers a working upgrade path. Do not display an AI action as functional until its backend route exists.
+
 ## Trust Protects Revenue
 
 Unverified companies must never publish live jobs to seekers. Enforce this rule on publishing and seeker-facing visibility. Unverified listings and broken billing erode trust and paid conversion.

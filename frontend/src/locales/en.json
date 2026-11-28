@@ -942,7 +942,11 @@
       "search": "Search account name or email"
     }
   },
+  "companyWorkspace": {
+    "jobsTitle": "Manage jobs", "jobsIntro": "Review and manage your company job posts.", "profileTitle": "Company profile", "profileIntro": "Check your verification status before publishing.", "verificationStatus": "Verification: {{status}}", "requestVerification": "Request verification", "verificationRequested": "Verification request submitted.", "lockTitle": "Verification required to publish", "lockBody": "Your company must be verified before a job can appear in the public feed.", "create": "Create job", "edit": "Edit job", "title": "Role title", "category": "Academic category", "selectCategory": "Select a category", "jobType": "Job type", "location": "City or location", "salaryMin": "Minimum salary", "salaryMax": "Maximum salary", "description": "Job description", "requirements": "Required skills", "skillsHint": "Separate skills with commas", "writeAi": "Write job description with AI", "titleRequired": "Enter a role title first.", "categoryRequired": "Select an academic category first.", "aiWritten": "AI draft ready. Review it before publishing.", "aiFallback": "A starter draft is ready. Add and review the details before publishing.", "aiError": "Could not write the job description. Please try again.", "quota": "{{count}} free AI uses remaining", "proPlan": "Pro AI access", "unspecified": "Not specified", "emptyTitle": "No jobs yet", "emptyBody": "Create your first job after verification.", "loadError": "Could not load company jobs or profile.", "actionError": "Could not save that change. Please try again.", "created": "Job created.", "updated": "Job updated.", "deleted": "Job deleted.", "closedInstead": "Job closed to preserve its application history.", "closeJob": "Close job", "activateJob": "Activate job", "deleteConfirm": "Remove {{title}}? Jobs with applications will be closed instead.", "status": { "active": "Active", "closed": "Closed", "verified": "Verified", "pending": "Pending", "unverified": "Unverified" }
+  },
   "dashboard": {
+    "companyJobsLink": "Manage jobs",
     "welcome": "Welcome, {{name}}",
     "subtitle": "Your CareerHub workspace is ready. More tools will appear here as we build out your experience.",
     "phaseLabel": "Workspace preview",

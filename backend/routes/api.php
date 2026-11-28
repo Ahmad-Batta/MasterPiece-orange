@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::put('/profile', [CompanyController::class, 'updateProfile']);
         Route::post('/verify-request', [CompanyController::class, 'requestVerification']);
         Route::get('/jobs', [CompanyController::class, 'indexJobs']);
+        Route::post('/jobs/ai-description', [CompanyController::class, 'writeJobDescription']);
         Route::post('/jobs', [CompanyController::class, 'storeJob']);
         Route::put('/jobs/{id}', [CompanyController::class, 'updateJob']);
         Route::patch('/jobs/{id}', [CompanyController::class, 'updateJob']);

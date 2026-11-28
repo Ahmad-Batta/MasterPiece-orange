@@ -10,6 +10,7 @@ use App\Models\JobPost;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class JobService
 {
@@ -180,6 +181,10 @@ class JobService
 
     private function syncPost(JobPost $post, Company $company, array $input): void
     {
+        if (($input['status'] ?? $post->status ?? 'active') === 'active' && $company->verification_status !== 'verified') {
+            throw ValidationException::withMessages(['status' => 'Company verification is required before publishing an active job.']);
+        }
+
         $existingJob = $post->job;
         $categoryId = $input['category_id'] ?? $existingJob?->category_id;
         if (! $categoryId) {

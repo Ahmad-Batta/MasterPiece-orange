@@ -106,6 +106,8 @@ class CoreBusinessApiTest extends TestCase
         $this->postJson('/api/company/verify-request')
             ->assertOk()->assertJsonPath('data.verification_status', 'pending');
 
+        $company->update(['verification_status' => 'verified']);
+
         $created = $this->postJson('/api/company/jobs', [
             'title' => 'Civil Engineer',
             'content' => 'Design and review structures.',
