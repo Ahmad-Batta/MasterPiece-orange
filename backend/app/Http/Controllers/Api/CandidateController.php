@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GenerateCvRequest;
 use App\Http\Requests\ResumeAutoFillRequest;
 use App\Http\Requests\ResumeUploadRequest;
+use App\Http\Requests\RewriteCvRequest;
 use App\Http\Requests\SeekerImageRequest;
 use App\Http\Requests\UpdateSeekerProfileRequest;
 use App\Http\Resources\ApplicationResource;
@@ -19,6 +20,7 @@ use App\Services\CandidateService;
 use App\Services\SavedJobService;
 use App\Services\SeekerCvService;
 use App\Support\ApiResponse;
+use App\Support\CvCredentials;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -57,7 +59,9 @@ class CandidateController extends Controller
 
     public function uploadResume(ResumeUploadRequest $request): JsonResponse
     {
-        $seeker = $this->candidateService->uploadResume($request->user(), $request->file('resume'));
+        $seeker = $this->candidateService->uploadResume(
+            $request->user(), $request->file('resume'), $request->safe()->only(array_keys(CvCredentials::FIELDS)),
+        );
 
         return ApiResponse::success((new SeekerResource($seeker))->resolve(), 'Resume uploaded and parsed successfully.');
     }
@@ -89,6 +93,11 @@ class CandidateController extends Controller
     public function analyzeCv(Request $request): JsonResponse
     {
         return ApiResponse::success($this->insightsService->analyzeCv($request->user()));
+    }
+
+    public function rewriteCv(RewriteCvRequest $request): JsonResponse
+    {
+        return ApiResponse::success($this->insightsService->rewriteCv($request->user(), $request->validated()));
     }
 
     public function toggleSavedJob(Request $request, int $id): JsonResponse

@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\JobPost;
 use App\Models\MatchingJob;
 use App\Models\Seeker;
+use App\Support\CvCredentials;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +126,7 @@ class CandidateService
         return min(100, array_sum(array_map(fn (array $check): int => filled($check['value']) ? $check['weight'] : 0, $checks)));
     }
 
-    public function uploadResume(Seeker $seeker, UploadedFile $file): Seeker
+    public function uploadResume(Seeker $seeker, UploadedFile $file, array $credentials = []): Seeker
     {
         $path = Storage::disk('local')->putFileAs(
             'resumes/'.$seeker->seeker_id,
@@ -149,6 +150,9 @@ class CandidateService
             'resume url' => $path,
             'parsed_cv_text' => $text,
         ]);
+        foreach ($credentials as $section => $rows) {
+            $seeker->{$section} = CvCredentials::normalize($section, $rows);
+        }
         $seeker->profile_strength = $this->profileStrength($seeker);
         $seeker->save();
 

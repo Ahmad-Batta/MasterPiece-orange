@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Seeker;
+use App\Support\CvCredentials;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -170,7 +171,7 @@ class SeekerCvService
             ];
         };
 
-        return [
+        $schema = [
             'type' => 'object',
             'additionalProperties' => false,
             'properties' => [
@@ -194,6 +195,12 @@ class SeekerCvService
             ],
             'required' => ['bio', 'phone', 'city', 'linkedin_url', 'github_url', 'education', 'skills_grouped', 'experience', 'projects'],
         ];
+        foreach (CvCredentials::FIELDS as $section => $fields) {
+            $schema['properties'][$section] = $objectList(array_fill_keys(array_keys($fields), $string), array_keys($fields));
+            $schema['required'][] = $section;
+        }
+
+        return $schema;
     }
 
     private function fallbackData(Seeker $seeker, string $rawText): array
@@ -241,6 +248,8 @@ class SeekerCvService
             'skills_grouped' => $seeker->skills_grouped ?? [],
             'experience' => $seeker->experience ?? [],
             'projects' => $seeker->projects ?? [],
+            'certifications' => $seeker->certifications ?? [],
+            'languages' => $seeker->languages ?? [],
         ];
     }
 
@@ -292,6 +301,8 @@ class SeekerCvService
             'skills_grouped' => $groups,
             'experience' => $normalizeObjects($data['experience'] ?? [], ['title', 'organization', 'location', 'start_date', 'end_date', 'bullets']),
             'projects' => $normalizeObjects($data['projects'] ?? [], ['title', 'organization', 'date_range', 'bullets']),
+            'certifications' => CvCredentials::normalize('certifications', $data['certifications'] ?? []),
+            'languages' => CvCredentials::normalize('languages', $data['languages'] ?? []),
         ];
     }
 
@@ -310,6 +321,8 @@ class SeekerCvService
             'experience' => $data['experience'],
             'projects' => $data['projects'],
             'skills_grouped' => $data['skills_grouped'],
+            'certifications' => $data['certifications'],
+            'languages' => $data['languages'],
             'skills' => json_encode($flatSkills, JSON_THROW_ON_ERROR),
             'parsed_cv_text' => $parsedText,
         ];
@@ -326,7 +339,7 @@ class SeekerCvService
     private function toPlainText(Seeker $seeker, array $data): string
     {
         $lines = [trim($seeker->{'first name'}.' '.$seeker->{'last name'}), $data['city'], $seeker->email, $data['phone'], $data['bio']];
-        foreach (['education', 'skills_grouped', 'experience', 'projects'] as $section) {
+        foreach (['education', 'skills_grouped', 'experience', 'projects', 'certifications', 'languages'] as $section) {
             foreach ($data[$section] as $item) {
                 $lines[] = implode(' ', array_filter(array_map(static fn ($value): string => is_array($value) ? implode(', ', $value) : (string) $value, $item)));
             }

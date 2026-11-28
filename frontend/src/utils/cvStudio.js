@@ -13,6 +13,8 @@ const serverFields = {
   experience: ['title', 'organization', 'location', 'start_date', 'end_date', 'bullets'],
   projects: ['title', 'organization', 'date_range', 'bullets'],
   skills_grouped: ['category', 'items'],
+  certifications: ['title', 'issuer', 'year'],
+  languages: ['language', 'proficiency'],
 };
 
 export function newCvRow(section, data = {}) {

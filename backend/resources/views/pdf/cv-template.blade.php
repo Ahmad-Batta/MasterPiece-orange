@@ -122,5 +122,21 @@
             </div>
         @endforeach
     </section>
+    @if(count($cv['certifications']) > 0)
+        <section class="section">
+            <h2 class="section-title">Certifications</h2>
+            @foreach($cv['certifications'] as $item)
+                <div class="entry"><strong>{{ $item['title'] }}</strong>@if(filled($item['issuer'])) · {{ $item['issuer'] }}@endif @if(filled($item['year'])) · {{ $item['year'] }}@endif</div>
+            @endforeach
+        </section>
+    @endif
+    @if(count($cv['languages']) > 0)
+        <section class="section">
+            <h2 class="section-title">Languages</h2>
+            @foreach($cv['languages'] as $item)
+                <div class="entry"><strong>{{ $item['language'] }}</strong>@if(filled($item['proficiency'])) · {{ $item['proficiency'] }}@endif</div>
+            @endforeach
+        </section>
+    @endif
 </body>
 </html>

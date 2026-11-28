@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/cv/generate', [CandidateController::class, 'generateCv']);
             Route::get('/cv/download', [CandidateController::class, 'downloadCv'])->name('api.seeker.cv.download');
             Route::post('/cv/analyze', [CandidateController::class, 'analyzeCv'])->name('api.seeker.cv.analyze');
+            Route::post('/cv/rewrite', [CandidateController::class, 'rewriteCv']);
             Route::post('/jobs/{id}/toggle-save', [CandidateController::class, 'toggleSavedJob'])->name('api.seeker.jobs.toggle-save');
             Route::get('/saved-jobs', [CandidateController::class, 'savedJobs'])->name('api.seeker.saved-jobs');
             Route::get('/recommendations', [CandidateController::class, 'recommendations']);

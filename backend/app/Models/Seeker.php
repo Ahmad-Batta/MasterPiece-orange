@@ -34,7 +34,7 @@ class Seeker extends Authenticatable
         'major', 'category_id', 'Phone_number', 'cv_path', 'parsed_cv_text', 'profile_strength', 'is_active',
         'plan', 'plan_expires_at', 'free_ai_uses_remaining',
         'phone', 'city', 'linkedin_url', 'github_url', 'education', 'experience', 'projects', 'skills_grouped',
-        'image_path', 'portfolio_url',
+        'image_path', 'portfolio_url', 'certifications', 'languages',
     ];
 
     protected $hidden = ['password', 'hashed password'];
@@ -59,6 +59,8 @@ class Seeker extends Authenticatable
             'experience' => 'array',
             'projects' => 'array',
             'skills_grouped' => 'array',
+            'certifications' => 'array',
+            'languages' => 'array',
         ];
     }
 

@@ -46,7 +46,7 @@ function SkillTags({ items, update, error }) {
   </div>;
 }
 
-export default function CvEditor({ draft, update, issues, busy, onReview }) {
+export default function CvEditor({ draft, update, issues, busy, onRewrite }) {
   const { t } = useTranslation();
   const confirm = useConfirm();
   const [open, setOpen] = useState('personal');
@@ -90,7 +90,9 @@ export default function CvEditor({ draft, update, issues, busy, onReview }) {
           {section === 'bio' && <>
             <FormField as="textarea" label={fieldLabel('bio')} rows={6} value={draft.bio} maxLength={10000}
               inputClassName={textAreaClass} error={issues.bio} onChange={(event) => update('bio', event.target.value)} />
-            <Button variant="secondary" onClick={() => onReview('Summary')}><Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('cvStudio.enhance')}</Button>
+            <Button variant="secondary" disabled={!draft.bio.trim()} onClick={() => onRewrite('summary')}>
+              <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('cvStudio.enhance')}
+            </Button>
           </>}
           {config && <>
             {draft[section].map((row, index) => {
@@ -120,7 +122,9 @@ export default function CvEditor({ draft, update, issues, busy, onReview }) {
                     <input type="checkbox" className="accent-[#2B362E]" checked={row.current} onChange={(event) => setRow('current', event.target.checked)} />
                     {t('cvStudio.current')}
                   </label>
-                  <Button variant="secondary" onClick={() => onReview('Experience')}><Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('cvStudio.polish')}</Button>
+                  <Button variant="secondary" disabled={!row.bullets.some((line) => line.trim())} onClick={() => onRewrite('experience', row)}>
+                    <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('cvStudio.polish')}
+                  </Button>
                 </>}
               </div>;
             })}

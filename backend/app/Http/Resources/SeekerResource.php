@@ -34,6 +34,8 @@ class SeekerResource extends JsonResource
             'experience' => $this->experience ?? [],
             'projects' => $this->projects ?? [],
             'skills_grouped' => $this->skills_grouped ?? [],
+            'certifications' => $this->certifications ?? [],
+            'languages' => $this->languages ?? [],
             'cv_path' => $this->cv_path,
             'has_cv' => filled($this->cv_path),
             'profile_strength' => (int) $this->profile_strength,

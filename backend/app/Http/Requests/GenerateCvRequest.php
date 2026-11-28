@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\CvCredentials;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GenerateCvRequest extends FormRequest
@@ -44,6 +45,6 @@ class GenerateCvRequest extends FormRequest
             'projects.*.date_range' => ['sometimes', 'nullable', 'string', 'max:100'],
             'projects.*.bullets' => ['sometimes', 'array', 'max:20'],
             'projects.*.bullets.*' => ['string', 'max:1000'],
-        ];
+        ] + CvCredentials::rules();
     }
 }
