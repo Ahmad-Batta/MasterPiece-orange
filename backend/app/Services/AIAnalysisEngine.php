@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Company;
 use App\Models\JobPost;
 use App\Models\MatchingJob;
 use App\Models\Seeker;
@@ -16,7 +17,7 @@ class AIAnalysisEngine
     ) {}
 
     /** @return array{match_percentage:int, strengths:list<string>, weaknesses:list<string>, interview_questions:list<string>} */
-    public function analyze(Seeker $seeker, JobPost $post, bool $refresh = false): array
+    public function analyze(Seeker $seeker, JobPost $post, bool $refresh = false, Seeker|Company|null $billingAccount = null): array
     {
         $post->loadMissing(['company', 'job.category']);
         $job = $this->jobService->ensureStandardJob($post);
@@ -33,7 +34,7 @@ class AIAnalysisEngine
             }
         }
 
-        $this->quotaService->consumeForAnalysis($seeker);
+        $this->quotaService->consumeForAnalysis($billingAccount ?? $seeker);
 
         $report = $this->requestGroq($seeker, $post);
         if ($report === null) {

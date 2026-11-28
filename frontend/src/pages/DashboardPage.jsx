@@ -56,6 +56,7 @@ export default function DashboardPage({ role }) {
           </Link>
           {role === 'company' && <Link className="button-secondary mt-3 self-start" to="/company/jobs">{t('dashboard.companyJobsLink')}</Link>}
           {role === 'company' && <Link className="button-secondary mt-3 self-start" to="/company/applicants">{t('companyApplicants.title')}</Link>}
+          {role === 'company' && <Link className="button-secondary mt-3 self-start" to="/company/settings">{t('companySettings.title')}</Link>}
         </section>
 
         <aside className="surface-card flex flex-col justify-between">

@@ -113,13 +113,26 @@ class JobService
         return ['closed' => false];
     }
 
-    public function applicants(Company $company, int $postId): LengthAwarePaginator
+    public function applicants(Company $company, int $postId, array $filters = []): LengthAwarePaginator
     {
         $post = JobPost::query()->where('company_id', $company->company_id)->whereKey($postId)->firstOrFail();
 
-        return Application::query()->where('job_post_id', $post->post_id)
-            ->with(['seeker', 'jobPost.company', 'jobPost.job.category'])
-            ->orderByDesc('match_percentage')->orderByDesc('applied_at')->paginate(25);
+        $query = Application::query()->where('job_post_id', $post->post_id)
+            ->with(['seeker', 'jobPost.company', 'jobPost.job.category']);
+        if (filled($filters['status'] ?? null)) {
+            $query->where('status', $filters['status']);
+        }
+
+        return ($filters['sort'] ?? 'match_score') === 'latest'
+            ? $query->orderByDesc('applied_at')->orderByDesc('application_id')->paginate(25)
+            : $query->orderByDesc('match_percentage')->orderByDesc('applied_at')->paginate(25);
+    }
+
+    public function companyApplication(Company $company, int $applicationId): Application
+    {
+        return Application::query()->whereKey($applicationId)
+            ->whereHas('jobPost', fn (Builder $post) => $post->where('company_id', $company->company_id))
+            ->with(['seeker', 'jobPost.company', 'jobPost.job.category'])->firstOrFail();
     }
 
     public function updateApplicationStatus(Company $company, int $applicationId, array $data): Application

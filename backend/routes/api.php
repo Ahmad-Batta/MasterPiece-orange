@@ -70,6 +70,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::patch('/jobs/{id}', [CompanyController::class, 'updateJob']);
         Route::delete('/jobs/{id}', [CompanyController::class, 'deleteJob']);
         Route::get('/jobs/{id}/applicants', [CompanyController::class, 'applicants']);
+        Route::get('/applications/{application}/cv', [CompanyController::class, 'downloadApplicantCv']);
+        Route::post('/applications/{application}/ai-review', [CompanyController::class, 'reviewApplicant']);
         Route::patch('/applications/{id}/status', [CompanyController::class, 'updateApplicationStatus']);
     });
 
