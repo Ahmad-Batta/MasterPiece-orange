@@ -21,7 +21,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', updateScrollState);
   }, [location.pathname]);
 
-  if (location.pathname.startsWith('/admin')) return null;
+  if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/seeker/')) return null;
 
   const closeMenu = () => setMenuOpen(false);
   const navClass = `inline-flex h-8 cursor-pointer items-center whitespace-nowrap rounded-lg px-2 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 ${isDark ? 'text-[#FAF9F5] hover:bg-white/10 focus-visible:ring-offset-[#2B362E]' : 'text-[#1C221E] hover:bg-[#FAF9F5]'}`;

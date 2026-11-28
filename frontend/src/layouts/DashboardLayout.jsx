@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, BriefcaseBusiness, Building2, CheckCheck, CreditCard, LayoutDashboard, LogOut, Settings2, ShieldCheck, Tags, Users, X } from 'lucide-react';
+import { Bell, BriefcaseBusiness, Building2, CheckCheck, CreditCard, FileText, LayoutDashboard, LogOut, Search, Settings2, ShieldCheck, Tags, UserRound, Users, X } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import ProfileAvatar from '../components/ProfileAvatar';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getApiData, getApiItems } from '../utils/apiResponse';
 import { useAdminPreferences } from '../utils/adminPreferences';
+import { openBilling } from '../utils/seekerProfile';
 
 const adminNavigation = [
   { to: '/admin', key: 'overview', Icon: LayoutDashboard, end: true },
@@ -18,6 +20,15 @@ const adminNavigation = [
   { to: '/admin/jobs', key: 'jobs', Icon: BriefcaseBusiness },
   { to: '/admin/settings', key: 'settings', Icon: Settings2 },
   { to: '/admin/payments', key: 'payments', Icon: CreditCard },
+];
+
+const seekerNavigation = [
+  { to: '/seeker/dashboard', key: 'overview', Icon: LayoutDashboard, end: true },
+  { to: '/seeker/profile', key: 'profile', Icon: UserRound },
+  { to: '/seeker/cv-builder', key: 'cv', Icon: FileText },
+  { to: '/seeker/jobs', key: 'jobs', Icon: Search },
+  { to: '/seeker/applications', key: 'applications', Icon: BriefcaseBusiness },
+  { to: '/seeker/settings', key: 'settings', Icon: Settings2 },
 ];
 
 function responsePayload(response) {
@@ -168,13 +179,49 @@ function NotificationMenu() {
 
 export default function DashboardLayout() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { role, user, logout } = useAuth();
+  const isSeeker = role === 'seeker';
   const { notify } = useToast();
   const navigate = useNavigate();
   const preferences = useAdminPreferences();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [pendingVerifications, setPendingVerifications] = useState(0);
-  const displayName = user?.name || user?.username || user?.email || '';
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(isSeeker);
+  const [profileError, setProfileError] = useState(false);
+  const [resumeDraft, setResumeDraft] = useState(null);
+  const displayName = profile?.name || user?.name || user?.username || user?.email || '';
+  const imageUrl = profile?.image_url || user?.image_url;
+
+  const reloadProfile = useCallback(async (signal) => {
+    setProfileLoading(true);
+    setProfileError(false);
+    try {
+      const response = await api.get('/seeker/profile', { signal });
+      if (!signal?.aborted) setProfile(getApiData(response));
+    } catch (error) {
+      if (!signal?.aborted && error.code !== 'ERR_CANCELED') setProfileError(true);
+    } finally {
+      if (!signal?.aborted) setProfileLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isSeeker) return undefined;
+    let controller;
+    const refresh = () => {
+      controller?.abort();
+      controller = new AbortController();
+      reloadProfile(controller.signal);
+    };
+    refresh();
+    const events = ['careerhub:billing-updated', 'careerhub:quota-exceeded'];
+    events.forEach((event) => window.addEventListener(event, refresh));
+    return () => {
+      controller.abort();
+      events.forEach((event) => window.removeEventListener(event, refresh));
+    };
+  }, [isSeeker, reloadProfile]);
 
   const loadPendingVerifications = useCallback(async (signal) => {
     try {
@@ -188,6 +235,7 @@ export default function DashboardLayout() {
   }, []);
 
   useEffect(() => {
+    if (role !== 'admin') return undefined;
     const controller = new AbortController();
     const refresh = () => loadPendingVerifications();
     loadPendingVerifications(controller.signal);
@@ -196,7 +244,7 @@ export default function DashboardLayout() {
       controller.abort();
       window.removeEventListener('careerhub:company-verifications-updated', refresh);
     };
-  }, [loadPendingVerifications]);
+  }, [loadPendingVerifications, role]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -215,16 +263,18 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-[#FAF9F5] lg:flex">
       <aside className="border-b border-[#E5E2DC] bg-white lg:fixed lg:inset-y-0 lg:start-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:border-b-0 lg:border-e">
         <div className="flex items-center gap-3 px-4 py-3 lg:px-6 lg:py-6">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2B362E] text-xs font-semibold text-white" aria-hidden="true">CH</span>
+          {isSeeker
+            ? <ProfileAvatar src={imageUrl} name={displayName} className="h-9 w-9 text-xs" />
+            : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2B362E] text-xs font-semibold text-white" aria-hidden="true">CH</span>}
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[#2B362E]">{t('nav.brand')}</p>
-            <p className="mt-0.5 text-[10px] font-medium tracking-wide text-[#A37E5E]">{t('admin.shell.label')}</p>
+            <p className="mt-0.5 text-[10px] font-medium tracking-wide text-[#A37E5E]">{t(isSeeker ? 'seeker.workspace' : 'admin.shell.label')}</p>
           </div>
-          <ShieldCheck className="ms-auto h-4 w-4 shrink-0 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />
+          {!isSeeker && <ShieldCheck className="ms-auto h-4 w-4 shrink-0 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />}
         </div>
 
-        <nav className="flex gap-2 overflow-x-auto px-4 pb-3 lg:flex-1 lg:flex-col lg:overflow-visible lg:px-4 lg:py-4" aria-label={t('admin.shell.navigation')}>
-          {adminNavigation.map(({ to, key, Icon, end }) => (
+        <nav className="flex gap-2 overflow-x-auto px-4 pb-3 lg:flex-1 lg:flex-col lg:overflow-visible lg:px-4 lg:py-4" aria-label={t(isSeeker ? 'seeker.navigationLabel' : 'admin.shell.navigation')}>
+          {(isSeeker ? seekerNavigation : adminNavigation).map(({ to, key, Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -232,7 +282,7 @@ export default function DashboardLayout() {
               className={({ isActive }) => `inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 lg:w-full ${isActive ? 'bg-[#2B362E] text-white' : 'text-[#1C221E] hover:bg-[#FAF9F5]'}`}
             >
               <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-              {t(`admin.navigation.${key}`)}
+              {t(`${isSeeker ? 'seeker' : 'admin'}.navigation.${key}`)}
               {key === 'companies' && preferences.showPendingVerificationBadge && pendingVerifications > 0 && (
                 <span className="ms-auto inline-flex min-w-5 items-center justify-center rounded-full border border-[#E6D7C8] bg-[#F5EFEA] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[#8E6B4D]" aria-label={t('admin.navigation.pendingVerifications', { count: pendingVerifications })}>
                   {pendingVerifications > 99 ? '99+' : pendingVerifications}
@@ -240,20 +290,25 @@ export default function DashboardLayout() {
               )}
             </NavLink>
           ))}
-          <div className="mt-auto hidden border-t border-[#E5E2DC] pt-4 lg:block">
+          {isSeeker ? <button type="button" className="button-secondary shrink-0 lg:mt-auto lg:w-full" onClick={openBilling}>
+            <CreditCard className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('billing.title')}
+          </button> : <div className="mt-auto hidden border-t border-[#E5E2DC] pt-4 lg:block">
             <p className="px-3 text-[10px] leading-relaxed text-[#1C221E]/60">{t('admin.shell.sidebarNote')}</p>
-          </div>
+          </div>}
         </nav>
       </aside>
 
       <div className="min-w-0 flex-1 lg:ms-64">
         <header className="sticky top-0 z-20 border-b border-[#E5E2DC] bg-white/95 backdrop-blur">
           <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
-            <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              {isSeeker && <ProfileAvatar src={imageUrl} name={displayName} className="h-8 w-8 text-xs" />}
+              <div className="min-w-0">
               <p className="truncate text-xs font-semibold text-[#2B362E]" dir="auto">{displayName}</p>
               <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-[#E5E2DC] bg-[#FAF9F5] px-2 py-0.5 text-[10px] font-medium text-[#2B362E]">
-                <ShieldCheck className="h-3 w-3 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />{t('admin.shell.roleBadge')}
+                {isSeeker ? t('admin.usersCompanies.roles.seeker') : <><ShieldCheck className="h-3 w-3 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />{t('admin.shell.roleBadge')}</>}
               </span>
+              </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -269,7 +324,7 @@ export default function DashboardLayout() {
         </header>
 
         <main id="main-content" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8" aria-live="polite">
-          <Outlet />
+          <Outlet context={{ profile, setProfile, profileLoading, profileError, reloadProfile, resumeDraft, setResumeDraft }} />
         </main>
       </div>
     </div>

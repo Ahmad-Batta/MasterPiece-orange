@@ -552,7 +552,7 @@ export default function AdminAccountsManagement({ view = 'users' }) {
                                 <Pencil className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.edit')}
                               </button>
                               {isCompany && <>
-                                <button className={`${compactButton} border-[#2B362E] bg-[#2B362E] text-white hover:bg-[#1F2822]`} type="button" onClick={() => updateCompany(account, 'verified')} disabled={isBusy || isVerified}>
+                                <button className="button-primary h-9 px-3 text-xs" type="button" onClick={() => updateCompany(account, 'verified')} disabled={isBusy || isVerified}>
                                   {isBusy ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.75} aria-hidden="true" /> : <BadgeCheck className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}{t(isPending ? 'admin.usersCompanies.approve' : 'admin.usersCompanies.verify')}
                                 </button>
                                 <button className={compactButton} type="button" onClick={() => updateCompany(account, 'unverified')} disabled={isBusy || isUnverified}>

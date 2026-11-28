@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApplicationResource;
 use App\Http\Resources\JobPostResource;
+use App\Models\Category;
 use App\Models\JobPost;
 use App\Models\Seeker;
 use App\Services\AIInsightsService;
@@ -21,6 +22,15 @@ class JobController extends Controller
         private readonly ApplicationProcessor $applicationProcessor,
         private readonly AIInsightsService $insightsService,
     ) {}
+
+    public function categories(): JsonResponse
+    {
+        $items = Category::query()->orderBy('category_name')->orderBy('category_id')
+            ->get(['category_id', 'category_name'])
+            ->map(fn (Category $category): array => ['id' => $category->category_id, 'name' => $category->category_name]);
+
+        return ApiResponse::success(['items' => $items]);
+    }
 
     public function index(Request $request): JsonResponse
     {

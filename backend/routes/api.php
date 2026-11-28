@@ -16,6 +16,7 @@ Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->
 Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('api.auth.google.callback');
 Route::get('/jobs', [JobController::class, 'index'])->name('api.jobs.index');
 Route::get('/plans', [PaymentController::class, 'plans'])->name('api.plans.index');
+Route::get('/categories', [JobController::class, 'categories']);
 Route::get('/platform-config', [PlatformSettingsController::class, 'publicConfig']);
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('api.payments.webhook');
 Route::get('/payments/demo-checkout/{paymentId}', [PaymentController::class, 'demoCheckout'])
@@ -43,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::prefix('seeker')->group(function (): void {
             Route::get('/profile', [CandidateController::class, 'profile']);
             Route::put('/profile', [CandidateController::class, 'updateProfile']);
+            Route::post('/image', [CandidateController::class, 'uploadImage']);
             Route::post('/cv', [CandidateController::class, 'uploadResume']);
             Route::post('/cv/auto-fill', [CandidateController::class, 'autoFillCv']);
             Route::post('/cv/generate', [CandidateController::class, 'generateCv']);

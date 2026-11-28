@@ -49,7 +49,7 @@ Success returns HTTP `201` with `{ "status": "success", "message": "...", "data"
 ### Authenticated account endpoints
 
 - `POST /api/logout` revokes the current Sanctum token.
-- `GET /api/me` returns `{ "role": "seeker | company | admin", "user": { "id": 1, "name": "...", "email": "..." } }` inside `data`.
+- `GET /api/me` returns `{ "role": "seeker | company | admin", "user": { "id": 1, "name": "...", "email": "..." } }` inside `data`. Seeker user summaries also include a public `image_url` or `null`. The same seeker summary is used by login, signup, JSON Google OAuth, and account updates.
 - `PUT /api/me/account` accepts `{ "name": "string", "email": "string" }` and returns the updated `{ "role": "seeker | company | admin", "user": { "id": 1, "name": "...", "email": "..." } }` inside the success envelope's `data`. Both fields are required; `name` is limited to 255 characters and `email` must be valid and globally unique across `admin`, `seeker`, and `companies`, excluding the current account. Legacy `admin.username`, `seeker.first name` / `last name`, and `companies.company_name` storage limits are enforced with field-level `422` errors.
 - `PUT /api/me/password` accepts `{ "current_password": "string", "password": "string", "password_confirmation": "string" }`. The new password must have at least 8 characters and match its confirmation. A wrong current password returns HTTP `422` with `errors.current_password`; success returns `{ "status": "success", "message": "Password updated successfully.", "data": { "updated": true } }`.
 - Protected routes require `Authorization: Bearer <token>` and the matching account role.
@@ -63,13 +63,16 @@ Success returns HTTP `201` with `{ "status": "success", "message": "...", "data"
 
 ## 2. Seeker APIs
 
-- `GET /api/seeker/profile` returns the current profile and a dynamically calculated `profile_strength` from 0 to 100.
-- `PUT /api/seeker/profile` accepts optional `first_name`, `last_name`, `email`, `headline`, `biography`, `major`, `category_id`, `skills` (string array), `location`, `phone_number`, and `linkedin_url`. The saved response includes the recalculated profile strength.
+- `GET /api/seeker/profile` returns the current profile, including public `image_url` (nullable), `portfolio_url`, and `profile_strength` (0–100).
+- `PUT /api/seeker/profile` accepts optional `first_name`, `last_name`, `email`, `headline`, `bio`, `major`, `category_id`, `skills` (string array), `city` (up to 100 characters), `phone` (string up to 50 characters), and HTTP(S) `linkedin_url`, `github_url`, and `portfolio_url` (up to 255 characters each). `biography`, `location`, and integer `phone_number` remain accepted for compatibility. When both forms are sent, `bio`, `city`, and `phone` take precedence. Send `null` to clear optional profile fields or `[]` to clear skills. The saved response is the updated profile.
+- `POST /api/seeker/image` accepts seeker-authenticated `multipart/form-data` with an `image` file (JPG, JPEG, PNG, or WEBP, up to 2 MB). On success, returns the updated profile with `data.image_url` and replaces the previous uploaded image. Images use the Laravel public disk and require the `public/storage` link (`php artisan storage:link`).
 - `POST /api/seeker/cv` accepts `multipart/form-data` with field `resume`; allowed types are PDF or DOCX, maximum size 10 MB. The response includes `cv_path`, `has_cv`, and updated `profile_strength`; extracted text is stored privately in the database and is not returned.
 - `GET /api/seeker/recommendations` returns cached AI job matches. Pass `?refresh=1` to request fresh analyses for active jobs.
 - `GET /api/seeker/applications` returns the authenticated seeker's applications, status, job summary, and AI evaluation.
 
 ## 3. Job Discovery and Applications
+
+- `GET /api/categories` is public and returns all academic categories as `data.items`, with `id` and `name` per item, sorted by name then ID.
 
 ### `GET /api/jobs`
 

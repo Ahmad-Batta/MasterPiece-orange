@@ -336,7 +336,7 @@ class AuthController extends Controller
         };
     }
 
-    /** @return array{id: int|string, name: string, email: string} */
+    /** @return array{id: int|string, name: string, email: string, image_url?: string|null} */
     private function presentUser(Model $account, string $role): array
     {
         $name = match (true) {
@@ -346,11 +346,17 @@ class AuthController extends Controller
             default => '',
         };
 
-        return [
+        $user = [
             'id' => $account->getKey(),
             'name' => $name,
             'email' => $account->email,
         ];
+
+        if ($account instanceof Seeker) {
+            $user['image_url'] = $account->imageUrl();
+        }
+
+        return $user;
     }
 
     private function createGoogleAccount(string $role, string $email, string $name): Model

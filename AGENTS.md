@@ -1,8 +1,9 @@
 # CAREERhub Agent Instructions
 
 ## Project Requirements
+- Read [BUSINESS_RULES.md](BUSINESS_RULES.md) before proposing plans, prioritizing tasks, or writing code. Apply its execution order and state which activation, retention, trust, or paid conversion outcome the work serves.
 - Read `REQUIREMENTS.md` before making application changes. Treat it as the source of truth for product scope, architecture, data model, and functional requirements.
-- This is a monorepo: `backend/` contains the Laravel 12 REST API, and `frontend/` is reserved for the upcoming React + Tailwind SPA. Keep `AGENTS.md`, `API_CONTRACT.md`, `REQUIREMENTS.md`, and `UI_UX_RULES.md` at the repository root so both apps can share them; keep `.git/` at root.
+- This is a monorepo: `backend/` contains the Laravel 12 REST API, and `frontend/` is reserved for the upcoming React + Tailwind SPA. Keep `AGENTS.md`, `BUSINESS_RULES.md`, `API_CONTRACT.md`, `REQUIREMENTS.md`, and `UI_UX_RULES.md` at the repository root so both apps can share them; keep `.git/` at root.
 - Run `php artisan`, Composer, Pint, and backend test commands from inside `backend/`. Laravel's environment file is `backend/.env`; do not move secrets into tracked files.
 - The MySQL database `careerhub` already contains `admin`, `applications`, `categories`, `companies`, `jobs`, `job_posts`, `matching_jobs`, and `seeker`. Read the exact columns and keys in `REQUIREMENTS.md` before writing queries, models, migrations, or seeders.
 - Preserve the existing MySQL database and its rows by default; schema work requires the approval defined in **Backend, Database & Advisory Policy** below. Eight ordered, table-guarded `create_*` migrations build the original schema on clean databases; on the existing MySQL database they skip all eight existing tables. Later migrations must be safe and additive unless the user explicitly authorizes a specific destructive operation.

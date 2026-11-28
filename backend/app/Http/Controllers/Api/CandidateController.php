@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GenerateCvRequest;
 use App\Http\Requests\ResumeAutoFillRequest;
 use App\Http\Requests\ResumeUploadRequest;
+use App\Http\Requests\SeekerImageRequest;
 use App\Http\Requests\UpdateSeekerProfileRequest;
 use App\Http\Resources\ApplicationResource;
 use App\Http\Resources\JobPostResource;
@@ -45,6 +46,13 @@ class CandidateController extends Controller
         $seeker = $this->candidateService->updateProfile($request->user(), $request->validated());
 
         return ApiResponse::success((new SeekerResource($seeker))->resolve(), 'Profile updated successfully.');
+    }
+
+    public function uploadImage(SeekerImageRequest $request): JsonResponse
+    {
+        $seeker = $this->candidateService->uploadImage($request->user(), $request->file('image'));
+
+        return ApiResponse::success((new SeekerResource($seeker))->resolve(), 'Profile image updated successfully.');
     }
 
     public function uploadResume(ResumeUploadRequest $request): JsonResponse

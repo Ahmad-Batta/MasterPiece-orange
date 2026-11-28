@@ -34,9 +34,15 @@ class Seeker extends Authenticatable
         'major', 'category_id', 'Phone_number', 'cv_path', 'parsed_cv_text', 'profile_strength', 'is_active',
         'plan', 'plan_expires_at', 'free_ai_uses_remaining',
         'phone', 'city', 'linkedin_url', 'github_url', 'education', 'experience', 'projects', 'skills_grouped',
+        'image_path', 'portfolio_url',
     ];
 
     protected $hidden = ['password', 'hashed password'];
+
+    public function imageUrl(): ?string
+    {
+        return $this->image_path ? asset('storage/'.$this->image_path) : null;
+    }
 
     protected function casts(): array
     {

@@ -73,3 +73,9 @@ Install and use `motion` from `motion/react` for floating hero badges, card hove
 Use `gsap` with `ScrollTrigger` for the hero photo's slow scale/parallax drift, the staggered hero text/CTA entrance, scroll-triggered section reveals, and numeric counters. Put GSAP setup inside `useEffect`, scope it with `gsap.context()` to a page root ref, and call `context.revert()` during cleanup. Do not let Motion and GSAP animate the same DOM node: assign a node to one animation system only.
 
 Respect `prefers-reduced-motion`: disable or simplify non-essential movement, while preserving content visibility, focus indicators, and usable controls. Avoid horizontal motion and layout shifts; keep all animation labels and status copy translated in both dictionaries.
+
+## 10. Expressive Iconography, Restrained Color Accents & Custom Uploads (Seeker & Company Standard)
+
+- **Large tinted icon containers in moderation.** Use a single focal `w-12 h-12` or `w-14 h-14 rounded-2xl` badge per onboarding choice, feature highlight, KPI card, or empty state. Use `w-6 h-6` to `w-7 h-7` Lucide icons at stroke width 1.75. Prefer bronze (`bg-[#A37E5E]/[0.12] text-[#A37E5E]`) or olive (`bg-[#2B362E]/10 text-[#2B362E]`). Restrained emerald or amber tints are reserved for semantic status badges. Keep compact action and navigation icons at their existing sizes.
+- **Custom upload controls.** Hide the native file input behind a keyboard-operable dashed dropzone. Include a large upload badge, a bilingual prompt and format/size hint, and a selected-file chip with a labelled remove button. Keep validation feedback next to the control and preserve the existing upload limits and submit behavior.
+- **Balanced cards.** Use `flex flex-col justify-between` on equal-height choice or feature cards so actions align at the bottom. Use quiet category or AI pills where they help users distinguish paths, and subtle border or `shadow-sm` hover transitions.

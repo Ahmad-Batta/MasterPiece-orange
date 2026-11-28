@@ -47,6 +47,11 @@ export function AuthProvider({ children }) {
     acceptSession({ role: session.role, user }, session.token);
   }, [acceptSession, session]);
 
+  const updateProfileImage = useCallback((imageUrl) => {
+    if (session?.role !== 'seeker' || window.localStorage.getItem(TOKEN_KEY) !== session.token) return;
+    updateCurrentUser({ ...session.user, image_url: imageUrl });
+  }, [session, updateCurrentUser]);
+
   useEffect(() => {
     const handleExpired = () => {
       clearStoredSession();
@@ -102,7 +107,8 @@ export function AuthProvider({ children }) {
     logout,
     completeOAuth,
     updateCurrentUser,
-  }), [session, isLoading, login, register, logout, completeOAuth, updateCurrentUser]);
+    updateProfileImage,
+  }), [session, isLoading, login, register, logout, completeOAuth, updateCurrentUser, updateProfileImage]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

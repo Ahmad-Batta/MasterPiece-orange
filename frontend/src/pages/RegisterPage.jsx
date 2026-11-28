@@ -35,7 +35,7 @@ export default function RegisterPage() {
     setRole(validRole(searchParams.get('role')));
   }, [searchParams]);
 
-  if (!isLoading && session) return <Navigate to={dashboardPath(session.role)} replace />;
+  if (!isLoading && session && !submitting) return <Navigate to={dashboardPath(session.role)} replace />;
 
   const selectRole = (nextRole) => {
     setRole(nextRole);
@@ -68,7 +68,10 @@ export default function RegisterPage() {
     try {
       const nextSession = await register({ ...values, name: values.name.trim(), role });
       notify(t('auth.registerSuccess'));
-      navigate(dashboardPath(nextSession.role), { replace: true });
+      navigate(dashboardPath(nextSession.role), {
+        replace: true,
+        state: nextSession.role === 'seeker' ? { newSeeker: true } : undefined,
+      });
     } catch (error) {
       if (error.response?.status === 422) {
         setErrors(getValidationErrors(error, { messageForField: () => t('auth.reviewFields') }));

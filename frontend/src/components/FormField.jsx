@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-export default function FormField({ label, error, className = '', inputClassName = '', ...inputProps }) {
+export default function FormField({ as: Control = 'input', label, error, className = '', inputClassName = '', ...inputProps }) {
   const id = useId();
   const inputId = inputProps.id || id;
   const errorId = `${inputId}-error`;
@@ -8,7 +8,7 @@ export default function FormField({ label, error, className = '', inputClassName
   return (
     <div className={className}>
       <label htmlFor={inputId} className="mb-2 block text-sm font-semibold text-[#2B362E]">{label}</label>
-      <input
+      <Control
         {...inputProps}
         id={inputId}
         className={`control-input ${error ? 'border-[#B91C1C] focus:border-[#B91C1C]' : ''} ${inputClassName}`}

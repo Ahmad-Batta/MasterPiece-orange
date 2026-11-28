@@ -1,0 +1,28 @@
+.cv-paper {
+  box-sizing: border-box;
+  min-block-size: 100%;
+  padding: clamp(1rem, 5%, 3rem);
+  overflow-wrap: anywhere;
+  background: #fff;
+  color: #1c221e;
+  font: 10pt/1.55 Georgia, "Times New Roman", serif;
+  text-align: start;
+}
+.cv-paper header { margin-block-end: 1rem; text-align: center; }
+.cv-paper header img { inline-size: 16mm; block-size: 16mm; margin-inline: auto; border-radius: 50%; object-fit: cover; }
+.cv-paper h1 { font-size: 20pt; line-height: 1.2; margin: 0 0 .35em; }
+.cv-paper p { margin: 0; white-space: pre-wrap; }
+.cv-paper a { color: inherit; text-decoration: underline; }
+.cv-paper-contact { display: inline-block; margin-inline: .35em; }
+.cv-paper-section { margin-block-start: .8rem; }
+.cv-paper-section h2 { margin: 0 0 .35rem; border-block-end: 1px solid currentColor; font: bold 12pt/1.3 Georgia, "Times New Roman", serif; }
+.cv-paper-entry { margin-block-end: .4rem; }
+.cv-paper-entry-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .15rem .6rem; }
+.cv-paper ul { list-style: disc; margin: 0; padding-inline-start: 1.3em; }
+@media print {
+  @page resume { size: A4 portrait; margin: 16mm 17mm; }
+  body.cv-print-document { margin: 0; background: white; }
+  .cv-print-document .cv-paper { page: resume; padding: 0; min-block-size: initial; }
+  .cv-print-document h2, .cv-print-document .cv-paper-entry-heading { break-after: avoid; }
+  .cv-print-document p, .cv-print-document li { orphans: 2; widows: 2; }
+}

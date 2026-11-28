@@ -7,7 +7,7 @@ function formatNumber(value, language) {
   return new Intl.NumberFormat(language === 'ar' ? 'ar-JO' : 'en-US', { maximumFractionDigits: 0 }).format(value);
 }
 
-export default function JobCard({ job }) {
+export default function JobCard({ job, matchPercentage }) {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
   const company = job.company?.name || job.company_name || t('jobs.companyFallback');
@@ -40,7 +40,9 @@ export default function JobCard({ job }) {
         </div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E2D9] pt-4 text-sm">
           <span className="tabular-nums text-[#1C221E]">{salary}</span>
-          <span className="inline-flex h-10 items-center gap-2 whitespace-nowrap font-medium text-[#2B362E]">{t('jobs.viewApply')}<ArrowUpRight className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" /></span>
+          {matchPercentage != null
+            ? <span className="rounded-full border border-[#E5E2D9] bg-[#FAF9F5] px-3 py-1 text-xs font-semibold tabular-nums text-[#2B362E]">{t('jobs.aiFitScore', { percentage: formatNumber(matchPercentage, i18n.language) })}</span>
+            : <span className="inline-flex h-10 items-center gap-2 whitespace-nowrap font-medium text-[#2B362E]">{t('jobs.viewApply')}<ArrowUpRight className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" /></span>}
         </div>
       </article>
     </Link>
