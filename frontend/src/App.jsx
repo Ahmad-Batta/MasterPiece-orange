@@ -18,7 +18,9 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const SeekerOverviewPage = lazy(() => import('./pages/SeekerOverviewPage'));
 const SeekerProfilePage = lazy(() => import('./pages/SeekerProfilePage'));
-const SeekerWorkspacePage = lazy(() => import('./pages/SeekerWorkspacePage'));
+const SeekerJobsPage = lazy(() => import('./pages/SeekerJobsPage'));
+const SeekerApplicationsPage = lazy(() => import('./pages/SeekerApplicationsPage'));
+const SeekerSettingsPage = lazy(() => import('./pages/SeekerSettingsPage'));
 const SeekerCvBuilderPage = lazy(() => import('./pages/SeekerCvBuilderPage'));
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -62,9 +64,9 @@ function ApplicationRoutes() {
           <Route path="dashboard" element={<SeekerOverviewPage />} />
           <Route path="profile" element={<SeekerProfilePage />} />
           <Route path="cv-builder" element={<SeekerCvBuilderPage />} />
-          <Route path="jobs" element={<SeekerWorkspacePage section="jobs" />} />
-          <Route path="applications" element={<SeekerWorkspacePage section="applications" />} />
-          <Route path="settings" element={<SeekerWorkspacePage section="settings" />} />
+          <Route path="jobs" element={<SeekerJobsPage />} />
+          <Route path="applications" element={<SeekerApplicationsPage />} />
+          <Route path="settings" element={<SeekerSettingsPage />} />
         </Route>
         <Route path="/company/dashboard" element={<ProtectedRoute role="company"><DashboardPage role="company" /></ProtectedRoute>} />
         <Route path="/payments/success" element={<PaymentReturn status="returned" />} />

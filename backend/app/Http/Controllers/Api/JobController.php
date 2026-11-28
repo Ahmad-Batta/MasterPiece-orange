@@ -34,7 +34,7 @@ class JobController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $jobs = $this->jobService->discover($request->only(['keyword', 'category_id', 'major', 'location', 'salary_min', 'salary_max']));
+        $jobs = $this->jobService->discover($request->only(['keyword', 'category_id', 'major', 'location', 'salary_min', 'salary_max', 'job_type']));
         $items = $jobs->getCollection()->map(fn (JobPost $post) => (new JobPostResource($post))->resolve())->all();
 
         return ApiResponse::success([

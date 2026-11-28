@@ -181,11 +181,18 @@
       "failed": "We could not process this CV. Check that it opens normally and try again.",
       "uploadAndReview": "Upload and review"
     },
-    "next": {
-      "cv": "The manual CV builder is coming in the next step. You can fill in your profile or upload a CV now.",
-      "jobs": "Job discovery is coming in the next step.",
-      "applications": "Application tracking is coming in the next step.",
-      "settings": "Account settings are coming in the next step."
+    "jobs": {
+      "intro": "Explore current opportunities and review the role before applying.",
+      "keyword": "Job title or keyword", "keywordPlaceholder": "Search roles or companies", "category": "Academic specialization", "allCategories": "All specializations", "location": "Location", "locationPlaceholder": "City or region", "type": "Job type", "allTypes": "All types", "salary": "Salary", "experience": "Experience level", "description": "About this role", "requirements": "Required skills", "unspecified": "Not specified", "clear": "Clear filters", "resultCount": "{{count}} opportunities", "loadError": "We could not load jobs. Please try again.", "emptyTitle": "No matching jobs", "emptyBody": "Try another search or clear the filters.", "apply": "Apply now", "applied": "Applied", "applySuccess": "Your application was submitted.", "alreadyApplied": "This job is closed or you have already applied.", "applyError": "We could not submit your application. Please try again.",
+      "types": { "full-time": "Full time", "part-time": "Part time", "contract": "Contract", "internship": "Internship", "remote": "Remote" }
+    },
+    "applications": {
+      "intro": "Follow each application and interview update in one place.", "history": "Application history", "resultCount": "{{count}} applications", "allStatuses": "All statuses", "loadError": "We could not load your applications.", "emptyTitle": "No applications here yet", "emptyBody": "Explore jobs or prepare your CV before applying.", "unavailableJob": "Job no longer available", "unknownStatus": "Unknown status", "unknownDate": "Date unavailable", "appliedDate": "Applied {{date}}", "interviewDate": "Interview {{date}}", "interviewLink": "Open interview link", "match": "{{value}}% AI match",
+      "counters": { "total": "Total applied", "review": "Under review / interview", "shortlisted": "Shortlisted / offered" },
+      "status": { "Applied": "Applied", "Pending": "Pending", "pending": "Pending", "Shortlisted": "Shortlisted", "Interview Scheduled": "Interview scheduled", "Offered": "Offered", "Rejected": "Rejected", "Interview": "Interview" }
+    },
+    "settings": {
+      "intro": "Keep your sign-in details secure and up to date.", "accountTitle": "Account details", "passwordTitle": "Change password", "name": "Full name", "email": "Email address", "current_password": "Current password", "password": "New password", "password_confirmation": "Confirm new password", "changePassword": "Update password", "showPassword": "Show password", "hidePassword": "Hide password", "loadError": "We could not load your account.", "checkField": "Review this field and try again.", "currentPasswordIncorrect": "Your current password is incorrect.", "accountSaved": "Account details updated.", "passwordSaved": "Password updated.", "accountError": "We could not update account details.", "passwordError": "We could not update the password."
     },
     "pagination": {
       "page": "Page {{current}} of {{total}}",

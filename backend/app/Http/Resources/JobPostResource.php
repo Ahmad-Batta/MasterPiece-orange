@@ -29,6 +29,8 @@ class JobPostResource extends JsonResource
             'company' => $this->whenLoaded('company', fn () => [
                 'id' => $this->company?->company_id,
                 'name' => $this->company?->company_name,
+                'image_url' => $this->company?->logo_url,
+                'verification_status' => $this->company?->verification_status,
                 'location' => $this->company?->location,
             ]),
             'created_at' => $this->created_at,

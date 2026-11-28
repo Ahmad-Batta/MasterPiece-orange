@@ -17,7 +17,14 @@ class JobService
 
     public function discover(array $filters): LengthAwarePaginator
     {
-        $query = JobPost::query()->where('status', 'active')->with(['company', 'job.category']);
+        $query = JobPost::query()->where('status', 'active')
+            ->whereHas('company', fn (Builder $company) => $company->where('verification_status', 'verified')->where('is_active', true))
+            ->with(['company', 'job.category']);
+
+        if (filled($filters['job_type'] ?? null)) {
+            $type = trim($filters['job_type']);
+            $query->whereHas('job', fn (Builder $job) => $job->where('job_type', $type));
+        }
 
         if (filled($filters['keyword'] ?? null)) {
             $keyword = '%'.trim($filters['keyword']).'%';

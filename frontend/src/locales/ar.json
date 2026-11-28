@@ -181,11 +181,18 @@
       "failed": "تعذّرت معالجة السيرة. تأكّد من أن الملف يُفتح بشكل طبيعي وحاول مجددًا.",
       "uploadAndReview": "رفع ومراجعة"
     },
-    "next": {
-      "cv": "محرّر السيرة اليدوي قادم في الخطوة التالية. يمكنك تعبئة ملفك أو رفع سيرة الآن.",
-      "jobs": "صفحة اكتشاف الوظائف قادمة في الخطوة التالية.",
-      "applications": "متابعة الطلبات قادمة في الخطوة التالية.",
-      "settings": "إعدادات الحساب قادمة في الخطوة التالية."
+    "jobs": {
+      "intro": "استكشف الفرص المتاحة وراجع تفاصيل الوظيفة قبل التقديم.",
+      "keyword": "المسمى الوظيفي أو كلمة البحث", "keywordPlaceholder": "ابحث عن وظيفة أو شركة", "category": "التخصص الأكاديمي", "allCategories": "جميع التخصصات", "location": "الموقع", "locationPlaceholder": "المدينة أو المنطقة", "type": "نوع العمل", "allTypes": "جميع الأنواع", "salary": "الراتب", "experience": "مستوى الخبرة", "description": "وصف الوظيفة", "requirements": "المهارات المطلوبة", "unspecified": "غير محدد", "clear": "مسح الفلاتر", "resultCount": "{{count}} فرصة", "loadError": "تعذّر تحميل الوظائف. حاول مجددًا.", "emptyTitle": "لا توجد وظائف مطابقة", "emptyBody": "جرّب بحثًا آخر أو امسح الفلاتر.", "apply": "قدّم الآن", "applied": "تم التقديم", "applySuccess": "تم إرسال طلبك.", "alreadyApplied": "الوظيفة مغلقة أو سبق أن تقدمت لها.", "applyError": "تعذّر إرسال الطلب. حاول مجددًا.",
+      "types": { "full-time": "دوام كامل", "part-time": "دوام جزئي", "contract": "عقد", "internship": "تدريب", "remote": "عن بعد" }
+    },
+    "applications": {
+      "intro": "تابع طلباتك ومواعيد مقابلاتك في مكان واحد.", "history": "سجل الطلبات", "resultCount": "{{count}} طلب", "allStatuses": "كل الحالات", "loadError": "تعذّر تحميل طلباتك.", "emptyTitle": "لا توجد طلبات بعد", "emptyBody": "استكشف الوظائف أو جهّز سيرتك الذاتية قبل التقديم.", "unavailableJob": "الوظيفة لم تعد متاحة", "unknownStatus": "حالة غير معروفة", "unknownDate": "التاريخ غير متاح", "appliedDate": "تاريخ التقديم: {{date}}", "interviewDate": "المقابلة: {{date}}", "interviewLink": "فتح رابط المقابلة", "match": "تطابق بالذكاء الاصطناعي {{value}}%",
+      "counters": { "total": "إجمالي الطلبات", "review": "قيد المراجعة / المقابلة", "shortlisted": "القائمة المختصرة / العروض" },
+      "status": { "Applied": "تم التقديم", "Pending": "قيد الانتظار", "pending": "قيد الانتظار", "Shortlisted": "القائمة المختصرة", "Interview Scheduled": "مقابلة مجدولة", "Offered": "عرض وظيفي", "Rejected": "مرفوض", "Interview": "مقابلة" }
+    },
+    "settings": {
+      "intro": "حافظ على بيانات دخولك محدّثة وآمنة.", "accountTitle": "بيانات الحساب", "passwordTitle": "تغيير كلمة المرور", "name": "الاسم الكامل", "email": "البريد الإلكتروني", "current_password": "كلمة المرور الحالية", "password": "كلمة المرور الجديدة", "password_confirmation": "تأكيد كلمة المرور الجديدة", "changePassword": "تحديث كلمة المرور", "showPassword": "إظهار كلمة المرور", "hidePassword": "إخفاء كلمة المرور", "loadError": "تعذّر تحميل بيانات حسابك.", "checkField": "راجع هذا الحقل وحاول مجددًا.", "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة.", "accountSaved": "تم تحديث بيانات الحساب.", "passwordSaved": "تم تحديث كلمة المرور.", "accountError": "تعذّر تحديث بيانات الحساب.", "passwordError": "تعذّر تحديث كلمة المرور."
     },
     "pagination": {
       "page": "الصفحة {{current}} من {{total}}",

@@ -76,7 +76,7 @@ Success returns HTTP `201` with `{ "status": "success", "message": "...", "data"
 
 ### `GET /api/jobs`
 
-Public endpoint. Optional query parameters: `keyword`, `category_id`, `major`, `location`, `salary_min`, and `salary_max`. Only active job posts are returned. Results use `data.items` and `data.pagination`.
+Public endpoint. Optional query parameters: `keyword`, `category_id`, `major`, `location`, `salary_min`, `salary_max`, and `job_type` (exact standardized job type, case-insensitive on the configured MySQL collation). SQL filtering and pagination return only active job posts from active, verified companies. Results use `data.items` and `data.pagination`. Each job item includes `company: { id, name, image_url, verification_status, location }`; `image_url` maps to the company's nullable `logo_url`. The verified badge must be shown only when `verification_status` is `verified`.
 
 ### `POST /api/jobs/{id}/apply`
 

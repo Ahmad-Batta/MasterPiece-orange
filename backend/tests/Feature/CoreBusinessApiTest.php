@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Company;
+use App\Models\Job;
 use App\Models\JobPost;
 use App\Models\Seeker;
 use App\Services\ResumeTextExtractor;
@@ -18,6 +19,42 @@ use Tests\TestCase;
 class CoreBusinessApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_public_jobs_only_include_active_posts_from_verified_active_companies_and_filter_type_before_pagination(): void
+    {
+        $category = Category::query()->create(['category_name' => 'Engineering']);
+        $verified = $this->makeCompany('verified@example.com', 'verified');
+        $verified->forceFill(['logo_url' => 'https://example.com/logo.png'])->save();
+        $unverified = $this->makeCompany('unverified@example.com');
+        $inactive = $this->makeCompany('inactive@example.com', 'verified');
+        $inactive->forceFill(['is_active' => false])->save();
+
+        foreach ([
+            [$verified, 'Visible engineer', 'Full-time', 'active'],
+            [$verified, 'Different type', 'Part-time', 'active'],
+            [$verified, 'Closed engineer', 'Full-time', 'closed'],
+            [$unverified, 'Unverified engineer', 'Full-time', 'active'],
+            [$inactive, 'Inactive company engineer', 'Full-time', 'active'],
+        ] as [$company, $title, $type, $status]) {
+            $job = Job::query()->create([
+                'company_id' => $company->company_id, 'category_id' => $category->category_id,
+                'title' => $title, 'description' => $title, 'location' => 'Amman',
+                'job_type' => $type, 'required_skills' => '[]',
+            ]);
+            JobPost::query()->create([
+                'company_id' => $company->company_id, 'job_id' => $job->job_id,
+                'title' => $title, 'content' => $title, 'post_type' => 'job', 'status' => $status,
+            ]);
+        }
+
+        $this->getJson('/api/jobs?job_type=Full-time')->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.items.0.title', 'Visible engineer')
+            ->assertJsonPath('data.items.0.company.name', 'Sample Employer')
+            ->assertJsonPath('data.items.0.company.image_url', 'https://example.com/logo.png')
+            ->assertJsonPath('data.items.0.company.verification_status', 'verified');
+    }
 
     public function test_seeker_profile_updates_score_and_resume_upload_extracts_text(): void
     {
@@ -92,7 +129,7 @@ class CoreBusinessApiTest extends TestCase
     public function test_job_discovery_application_and_groq_report_are_persisted(): void
     {
         $category = Category::query()->create(['category_name' => 'Information Technology']);
-        $company = $this->makeCompany();
+        $company = $this->makeCompany(verificationStatus: 'verified');
         Sanctum::actingAs($company, ['role:company']);
         $post = $this->postJson('/api/company/jobs', [
             'title' => 'Laravel Developer',
@@ -119,8 +156,10 @@ class CoreBusinessApiTest extends TestCase
         ]);
         config(['services.groq.key' => 'test-groq-key', 'services.groq.model' => 'gpt-oss-20b']);
 
-        $this->getJson('/api/jobs?keyword=Laravel&category_id='.$category->category_id.'&location=Amman&salary_min=800')
-            ->assertOk()->assertJsonPath('data.items.0.id', $post);
+        $this->getJson('/api/jobs?keyword=Laravel&category_id='.$category->category_id.'&location=Amman&salary_min=800&job_type=Full-time')
+            ->assertOk()->assertJsonPath('data.items.0.id', $post)
+            ->assertJsonPath('data.items.0.company.name', 'Sample Employer')
+            ->assertJsonPath('data.items.0.company.verification_status', 'verified');
 
         $seeker = $this->makeSeeker($category, 'Samira', 'Hassan', 'samira@example.com');
         $seeker->forceFill([
