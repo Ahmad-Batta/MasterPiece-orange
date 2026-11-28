@@ -191,10 +191,20 @@ class PaymentService
             'amount' => $payment->amount,
             'currency' => $payment->currency,
             'gateway' => $payment->gateway,
+            'mode' => $payment->gateway === 'demo' ? 'demo' : (str_starts_with($payment->gateway_session_id ?? '', 'cs_live_') ? 'live' : (str_starts_with($payment->gateway_session_id ?? '', 'cs_test_') ? 'test' : 'unknown')),
             'status' => $payment->status,
             'gateway_session_id' => $payment->gateway_session_id,
             'paid_at' => $payment->paid_at,
             'created_at' => $payment->created_at,
         ];
+    }
+
+    public function revenueTotals(): array
+    {
+        // SUBSTR is portable across MySQL and SQLite and treats underscores literally.
+        $mode = "CASE WHEN gateway = 'demo' THEN 'demo' WHEN SUBSTR(gateway_session_id, 1, 8) = 'cs_live_' THEN 'live' WHEN SUBSTR(gateway_session_id, 1, 8) = 'cs_test_' THEN 'test' ELSE 'unknown' END";
+
+        return Payment::query()->where('status', 'paid')->selectRaw('currency, gateway, '.$mode.' AS mode, SUM(amount) AS amount, COUNT(*) AS transactions')
+            ->groupBy('currency', 'gateway')->groupByRaw($mode)->orderBy('currency')->get()->toArray();
     }
 }

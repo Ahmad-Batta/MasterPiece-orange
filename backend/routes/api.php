@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PlatformSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
@@ -15,6 +16,7 @@ Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->
 Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('api.auth.google.callback');
 Route::get('/jobs', [JobController::class, 'index'])->name('api.jobs.index');
 Route::get('/plans', [PaymentController::class, 'plans'])->name('api.plans.index');
+Route::get('/platform-config', [PlatformSettingsController::class, 'publicConfig']);
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('api.payments.webhook');
 Route::get('/payments/demo-checkout/{paymentId}', [PaymentController::class, 'demoCheckout'])
     ->middleware('signed')->name('api.payments.demo.checkout');
@@ -22,6 +24,8 @@ Route::get('/payments/demo-checkout/{paymentId}', [PaymentController::class, 'de
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+    Route::put('/me/account', [AuthController::class, 'updateAccount'])->name('api.me.account.update');
+    Route::put('/me/password', [AuthController::class, 'updatePassword'])->name('api.me.password.update');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('api.notifications.read-all');
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('api.notifications.read');
@@ -66,6 +70,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     });
 
     Route::middleware('role:admin')->prefix('admin')->group(function (): void {
+        Route::get('/settings', [PlatformSettingsController::class, 'show']);
+        Route::put('/settings', [PlatformSettingsController::class, 'update']);
+        Route::get('/subscriptions', [AdminController::class, 'subscriptions']);
+        Route::get('/users/{role}/{id}', [AdminController::class, 'userDetails'])->whereIn('role', ['admin', 'seeker', 'company']);
         Route::get('/payments', [PaymentController::class, 'adminIndex']);
         Route::get('/stats', [AdminController::class, 'stats']);
         Route::get('/verifications', [AdminController::class, 'verifications']);

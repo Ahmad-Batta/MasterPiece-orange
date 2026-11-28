@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, Building2, CheckCheck, LayoutDashboard, LogOut, ShieldCheck, Tags, Users, X } from 'lucide-react';
+import { Bell, BriefcaseBusiness, Building2, CheckCheck, CreditCard, LayoutDashboard, LogOut, Settings2, ShieldCheck, Tags, Users, X } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api/axios';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { getApiData, getApiItems } from '../utils/apiResponse';
+import { useAdminPreferences } from '../utils/adminPreferences';
 
 const adminNavigation = [
-  { to: '/admin/dashboard', key: 'overview', Icon: LayoutDashboard, end: true },
-  { to: '/admin/users-companies', key: 'usersCompanies', Icon: Building2 },
+  { to: '/admin', key: 'overview', Icon: LayoutDashboard, end: true },
+  { to: '/admin/users', key: 'users', Icon: Users },
+  { to: '/admin/companies', key: 'companies', Icon: Building2 },
   { to: '/admin/catalog', key: 'catalog', Icon: Tags },
+  { to: '/admin/jobs', key: 'jobs', Icon: BriefcaseBusiness },
+  { to: '/admin/settings', key: 'settings', Icon: Settings2 },
+  { to: '/admin/payments', key: 'payments', Icon: CreditCard },
 ];
 
 function responsePayload(response) {
@@ -165,8 +171,32 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
+  const preferences = useAdminPreferences();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [pendingVerifications, setPendingVerifications] = useState(0);
   const displayName = user?.name || user?.username || user?.email || '';
+
+  const loadPendingVerifications = useCallback(async (signal) => {
+    try {
+      const response = await api.get('/admin/verifications', { params: { per_page: 100 }, signal });
+      const payload = getApiData(response);
+      const items = getApiItems(payload);
+      setPendingVerifications(Number(payload.pagination?.total ?? items.length));
+    } catch (error) {
+      if (error.code !== 'ERR_CANCELED') setPendingVerifications(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const refresh = () => loadPendingVerifications();
+    loadPendingVerifications(controller.signal);
+    window.addEventListener('careerhub:company-verifications-updated', refresh);
+    return () => {
+      controller.abort();
+      window.removeEventListener('careerhub:company-verifications-updated', refresh);
+    };
+  }, [loadPendingVerifications]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -203,6 +233,11 @@ export default function DashboardLayout() {
             >
               <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
               {t(`admin.navigation.${key}`)}
+              {key === 'companies' && preferences.showPendingVerificationBadge && pendingVerifications > 0 && (
+                <span className="ms-auto inline-flex min-w-5 items-center justify-center rounded-full border border-[#E6D7C8] bg-[#F5EFEA] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[#8E6B4D]" aria-label={t('admin.navigation.pendingVerifications', { count: pendingVerifications })}>
+                  {pendingVerifications > 99 ? '99+' : pendingVerifications}
+                </span>
+              )}
             </NavLink>
           ))}
           <div className="mt-auto hidden border-t border-[#E5E2DC] pt-4 lg:block">

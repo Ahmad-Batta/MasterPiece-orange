@@ -84,7 +84,8 @@ class CompanyService
             ]);
         }
 
-        $company->update(['verification_status' => 'pending']);
+        $mode = app(PlatformSettingsService::class)->current()->company_verification_mode;
+        $company->update(['verification_status' => $mode === 'automatic' ? 'verified' : 'pending']);
 
         return $company->fresh();
     }

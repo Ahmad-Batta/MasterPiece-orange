@@ -9,12 +9,14 @@ import GoogleAuthLink from '../components/GoogleAuthLink';
 import AuthVisualPanel from '../components/AuthVisualPanel';
 import { dashboardPath, useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { usePlatformConfig } from '../context/PlatformConfigContext';
 import { getValidationErrors } from '../utils/validationErrors';
 
 export default function LoginPage() {
   const { t } = useTranslation();
   const { login, session, isLoading } = useAuth();
   const { notify } = useToast();
+  const platformConfig = usePlatformConfig();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,6 +75,9 @@ export default function LoginPage() {
         setErrors({});
         setMessage('');
         setAccountSuspended(true);
+      } else if (error.response?.status === 503 && error.response?.data?.code === 'MAINTENANCE_MODE') {
+        setErrors({});
+        setMessage(error.response.data.message || t('auth.maintenanceMessage'));
       } else if (error.response?.status === 422) {
         setErrors(getValidationErrors(error, { messageForField: () => t('auth.reviewFields') }));
         setMessage(t('auth.reviewFields'));
@@ -111,7 +116,7 @@ export default function LoginPage() {
                 >
                   <h2 className="text-sm font-semibold">{t('auth.accountSuspendedTitle')}</h2>
                   <p className="mt-1 text-sm leading-relaxed">{t('auth.accountSuspendedMessage')}</p>
-                  <a className="mt-2 inline-flex h-8 items-center whitespace-nowrap text-xs font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" href="mailto:support@careerhub.io">{t('auth.contactPlatformSupport')}</a>
+                  <a className="mt-2 inline-flex h-8 items-center whitespace-nowrap text-xs font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" href={`mailto:${platformConfig.support_email}`}>{t('auth.contactPlatformSupport')}</a>
                 </motion.section>
               )}
             </AnimatePresence>

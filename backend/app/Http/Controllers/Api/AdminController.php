@@ -51,11 +51,37 @@ class AdminController extends Controller
     {
         $filters = $request->validate([
             'search' => ['sometimes', 'string', 'max:150'], 'role' => ['sometimes', 'in:seeker,company,admin'],
+            'verification_status' => ['sometimes', 'in:unverified,pending,verified'],
             'status' => ['sometimes', 'in:active,inactive,1,0'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
         $filters['status'] = isset($filters['status']) ? (string) ((int) in_array($filters['status'], ['active', '1'], true)) : null;
 
         return ApiResponse::success($this->paginated($this->adminService->users($filters)));
+    }
+
+    public function userDetails(string $role, int $id): JsonResponse
+    {
+        $class = ['admin' => Admin::class, 'seeker' => Seeker::class, 'company' => Company::class][$role];
+        $user = $class::query()->findOrFail($id);
+        $details = $this->userSummary($user, $role);
+        if ($role === 'company') {
+            $details += $user->only(['industry', 'description', 'website', 'location', 'verification_status']);
+            $details['company_profile'] = ['id' => $id, 'company_name' => $user->company_name] + $details;
+        } elseif ($role === 'seeker') {
+            $details += $user->only(['major', 'location', 'category_id', 'biography', 'linkedin_url', 'github_url']);
+            $details['linkedin_url'] = $user->linkedin_url ?? $user->{'linkedIn url'};
+            $decoded = json_decode($user->skills ?? '[]', true);
+            $details['skills'] = is_array($decoded) ? array_values($decoded) : array_values(array_filter(array_map('trim', explode(',', $user->skills ?? ''))));
+        }
+
+        return ApiResponse::success($details);
+    }
+
+    public function subscriptions(Request $request): JsonResponse
+    {
+        $filters = $request->validate(['role' => ['sometimes', 'in:seeker,company'], 'search' => ['sometimes', 'string', 'max:150'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
+
+        return ApiResponse::success($this->paginated($this->adminService->subscriptions($filters)));
     }
 
     public function createUser(Request $request): JsonResponse
@@ -103,12 +129,31 @@ class AdminController extends Controller
             'location' => ['sometimes', 'nullable', 'string', 'max:100'], 'major' => ['sometimes', 'nullable', 'string', 'max:100'],
             'category_id' => ['sometimes', 'nullable', 'integer', 'exists:categories,category_id'],
         ]);
+        $data += $request->validate([
+            'website' => ['sometimes', 'nullable', 'url:http,https', 'max:255'],
+            'biography' => ['sometimes', 'nullable', 'string', 'max:10000'],
+            'skills' => ['sometimes', 'array', 'max:100'], 'skills.*' => ['string', 'max:100'],
+            'linkedin_url' => ['sometimes', 'nullable', 'url:http,https', 'max:255'],
+            'github_url' => ['sometimes', 'nullable', 'url:http,https', 'max:255'],
+        ]);
         $role = $data['role'];
         unset($data['role']);
         $class = ['seeker' => Seeker::class, 'company' => Company::class, 'admin' => Admin::class][$role];
         $user = $class::query()->findOrFail($id);
         if (isset($data['email']) && $data['email'] !== $user->email && $this->emailExists($data['email'])) {
             return ApiResponse::error('The email has already been taken.', ['email' => ['The email has already been taken.']], 422);
+        }
+        if ($role === 'admin' && (mb_strlen($data['name'] ?? $user->username) > 50 || mb_strlen($data['email'] ?? $user->email) > 50)) {
+            return ApiResponse::error('Administrator fields exceed their storage limits.', ['name' => ['Maximum 50 characters.'], 'email' => ['Maximum 50 characters.']]);
+        }
+        if ($role === 'seeker' && isset($data['name'])) {
+            $names = preg_split('/\s+/', trim($data['name']), 2);
+            if (mb_strlen($names[0]) > 50 || mb_strlen($names[1] ?? '') > 50) {
+                return ApiResponse::error('Name is too long.', ['name' => ['Each name part must be at most 50 characters.']]);
+            }
+        }
+        if ($role === 'seeker' && mb_strlen($data['location'] ?? '') > 50) {
+            return ApiResponse::error('Location is too long.', ['location' => ['Maximum 50 characters.']]);
         }
         $active = $data['is_active'] ?? (isset($data['status']) ? $data['status'] === 'active' : null);
         unset($data['status'], $data['is_active']);
@@ -128,7 +173,7 @@ class AdminController extends Controller
                 $updates['first name'] = $parts[0];
                 $updates['last name'] = $parts[1] ?? '';
             }
-            foreach (['location', 'major', 'category_id'] as $field) {
+            foreach (['location', 'major', 'category_id', 'biography', 'linkedin_url', 'github_url'] as $field) {
                 if (array_key_exists($field, $data)) {
                     $updates[$field] = $data[$field];
                 }
@@ -137,7 +182,7 @@ class AdminController extends Controller
             if (isset($data['name'])) {
                 $updates['company_name'] = $data['name'];
             }
-            foreach (['location', 'industry', 'description'] as $field) {
+            foreach (['location', 'industry', 'description', 'website'] as $field) {
                 if (array_key_exists($field, $data)) {
                     $updates[$field] = $data[$field];
                 }
@@ -147,14 +192,25 @@ class AdminController extends Controller
                 $updates['username'] = $data['name'];
             }
         }
-        $user->update($updates);
+        if ($role === 'seeker' && array_key_exists('skills', $data)) {
+            $updates['skills'] = json_encode($data['skills'] ?? []);
+        }
+        foreach (['industry', 'description', 'location', 'biography', 'major'] as $field) {
+            if (array_key_exists($field, $updates) && $updates[$field] === null) {
+                $updates[$field] = '';
+            }
+        }
+        if (isset($updates['name'])) {
+            unset($updates['name']);
+        }
+        $user = $this->adminService->updateAccount($user, $updates, $request->user());
 
         return ApiResponse::success($this->userSummary($user->fresh(), $role), 'User updated.');
     }
 
-    public function deactivateUser(string $role, int $id): JsonResponse
+    public function deactivateUser(Request $request, string $role, int $id): JsonResponse
     {
-        $user = $this->adminService->deactivateUser($role, $id);
+        $user = $this->adminService->deactivateUser($role, $id, $request->user());
 
         return ApiResponse::success(['id' => $user->getKey(), 'role' => $role, 'is_active' => false], 'Account deactivated.');
     }

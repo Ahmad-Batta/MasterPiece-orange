@@ -9,12 +9,15 @@ use App\Models\Admin;
 use App\Models\Company;
 use App\Models\Seeker;
 use App\Services\GoogleOAuthState;
+use App\Services\PlatformSettingsService;
+use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
@@ -59,6 +62,10 @@ class AuthController extends Controller
                 'message' => 'The provided credentials are incorrect.',
                 'errors' => ['email' => ['The provided credentials are incorrect.']],
             ], 422);
+        }
+
+        if (! $account instanceof Admin && app(PlatformSettingsService::class)->current()->maintenance_enabled) {
+            return response()->json(['status' => 'error', 'code' => 'MAINTENANCE_MODE', 'message' => 'The platform is under maintenance.', 'errors' => []], 503);
         }
 
         if ($account instanceof Admin) {
@@ -174,6 +181,12 @@ class AuthController extends Controller
                 return redirect()->away($frontendUrl.'/login?error=suspended');
             }
 
+            if (! $account instanceof Admin && app(PlatformSettingsService::class)->current()->maintenance_enabled) {
+                return $request->wantsJson()
+                    ? response()->json(['status' => 'error', 'code' => 'MAINTENANCE_MODE', 'message' => 'The platform is under maintenance.', 'errors' => []], 503)
+                    : redirect()->away($frontendUrl.'/login?error=maintenance');
+            }
+
             if (! $account) {
                 $account = $this->createGoogleAccount($role, $email, $name !== '' ? $name : strstr($email, '@', true));
             } else {
@@ -232,18 +245,95 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $account = $request->user();
-        $role = match (true) {
-            $account instanceof Admin => 'admin',
-            $account instanceof Company => 'company',
-            $account instanceof Seeker => 'seeker',
-            default => 'unknown',
-        };
+        $role = $this->accountRole($account);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Current user loaded.',
             'data' => ['role' => $role, 'user' => $this->presentUser($account, $role)],
         ]);
+    }
+
+    public function updateAccount(Request $request): JsonResponse
+    {
+        $account = $request->user();
+        $role = $this->accountRole($account);
+        abort_if($role === 'unknown', 403);
+
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => mb_strtolower(trim($request->input('email')))]);
+        }
+
+        $emailRules = ['required', 'email', 'max:255'];
+        foreach ([Admin::class, Seeker::class, Company::class] as $modelClass) {
+            $model = new $modelClass;
+            $unique = Rule::unique($model->getTable(), 'email');
+            if ($account instanceof $modelClass) {
+                $unique->ignore($account->getKey(), $account->getKeyName());
+            }
+            $emailRules[] = $unique;
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => $emailRules,
+        ]);
+        $name = trim($data['name']);
+
+        if ($account instanceof Admin && mb_strlen($name) > 50) {
+            throw ValidationException::withMessages(['name' => ['Administrator names may not exceed 50 characters.']]);
+        }
+        if ($account instanceof Admin && mb_strlen($data['email']) > 50) {
+            throw ValidationException::withMessages(['email' => ['Administrator email addresses may not exceed 50 characters.']]);
+        }
+
+        if ($account instanceof Seeker) {
+            $parts = preg_split('/\s+/', $name, 2) ?: [$name];
+            if (mb_strlen($parts[0]) > 50 || mb_strlen($parts[1] ?? '') > 50) {
+                throw ValidationException::withMessages(['name' => ['Each name part may not exceed 50 characters.']]);
+            }
+            $account->{'first name'} = $parts[0];
+            $account->{'last name'} = $parts[1] ?? '';
+        } elseif ($account instanceof Admin) {
+            $account->username = $name;
+        } else {
+            $account->company_name = $name;
+        }
+
+        $account->email = $data['email'];
+        $account->save();
+
+        return ApiResponse::success(['role' => $role, 'user' => $this->presentUser($account, $role)], 'Account updated successfully.');
+    }
+
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $account = $request->user();
+        abort_if($this->accountRole($account) === 'unknown', 403);
+
+        $data = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (! $account->password || ! Hash::check($data['current_password'], $account->password)) {
+            throw ValidationException::withMessages(['current_password' => ['The current password is incorrect.']]);
+        }
+
+        $account->password = Hash::make($data['password']);
+        $account->save();
+
+        return ApiResponse::success(['updated' => true], 'Password updated successfully.');
+    }
+
+    private function accountRole(Model $account): string
+    {
+        return match (true) {
+            $account instanceof Admin => 'admin',
+            $account instanceof Company => 'company',
+            $account instanceof Seeker => 'seeker',
+            default => 'unknown',
+        };
     }
 
     /** @return array{id: int|string, name: string, email: string} */

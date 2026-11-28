@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PlatformSettingsService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,6 +11,15 @@ use Laravel\Sanctum\HasApiTokens;
 class Company extends Authenticatable
 {
     use HasApiTokens;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Company $account): void {
+            if (! array_key_exists('free_ai_uses_remaining', $account->getAttributes())) {
+                $account->free_ai_uses_remaining = app(PlatformSettingsService::class)->current()->default_company_ai_uses;
+            }
+        });
+    }
 
     protected $table = 'companies';
 

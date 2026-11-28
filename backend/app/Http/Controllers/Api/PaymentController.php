@@ -117,6 +117,7 @@ class PaymentController extends Controller
         $payments = $this->paymentService->adminPayments($filters);
 
         return ApiResponse::success([
+            'totals' => $this->paymentService->revenueTotals(),
             'items' => $payments->getCollection()->map(fn (Payment $payment) => $this->paymentService->paymentSummary($payment))->all(),
             'pagination' => ['current_page' => $payments->currentPage(), 'last_page' => $payments->lastPage(), 'per_page' => $payments->perPage(), 'total' => $payments->total()],
         ]);

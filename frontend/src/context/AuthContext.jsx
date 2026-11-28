@@ -42,6 +42,11 @@ export function AuthProvider({ children }) {
     setSession(null);
   }, []);
 
+  const updateCurrentUser = useCallback((user) => {
+    if (!session) return;
+    acceptSession({ role: session.role, user }, session.token);
+  }, [acceptSession, session]);
+
   useEffect(() => {
     const handleExpired = () => {
       clearStoredSession();
@@ -96,7 +101,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     completeOAuth,
-  }), [session, isLoading, login, register, logout, completeOAuth]);
+    updateCurrentUser,
+  }), [session, isLoading, login, register, logout, completeOAuth, updateCurrentUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

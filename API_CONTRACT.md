@@ -50,6 +50,8 @@ Success returns HTTP `201` with `{ "status": "success", "message": "...", "data"
 
 - `POST /api/logout` revokes the current Sanctum token.
 - `GET /api/me` returns `{ "role": "seeker | company | admin", "user": { "id": 1, "name": "...", "email": "..." } }` inside `data`.
+- `PUT /api/me/account` accepts `{ "name": "string", "email": "string" }` and returns the updated `{ "role": "seeker | company | admin", "user": { "id": 1, "name": "...", "email": "..." } }` inside the success envelope's `data`. Both fields are required; `name` is limited to 255 characters and `email` must be valid and globally unique across `admin`, `seeker`, and `companies`, excluding the current account. Legacy `admin.username`, `seeker.first name` / `last name`, and `companies.company_name` storage limits are enforced with field-level `422` errors.
+- `PUT /api/me/password` accepts `{ "current_password": "string", "password": "string", "password_confirmation": "string" }`. The new password must have at least 8 characters and match its confirmation. A wrong current password returns HTTP `422` with `errors.current_password`; success returns `{ "status": "success", "message": "Password updated successfully.", "data": { "updated": true } }`.
 - Protected routes require `Authorization: Bearer <token>` and the matching account role.
 
 ### Google OAuth
@@ -110,6 +112,14 @@ The persisted and returned evaluation schema is:
 
 ## 6. Admin APIs
 
+Admin lists filter in SQL before pagination. `GET /api/admin/stats` additionally returns `activity_daily`: seven chronological `{ date, seekers, companies, jobs, applications, events }` rows, including zero-activity dates, plus `activity_timezone`. Pending verification totals use `data.pagination.total` from the verification queue.
+
+`GET /api/admin/users` accepts `verification_status=unverified|pending|verified` for companies. `GET /api/admin/users/{role}/{id}` returns a full editable profile without credentials: company description, website, location, industry and verification; or seeker biography, skills, major, location, LinkedIn and GitHub. `PUT|PATCH /api/admin/users/{id}` accepts these fields. Self-deactivation and deactivation of the last active administrator return `422` with a `status` error. Job-post `search` matches company names too.
+
+`GET /api/admin/settings` and `PUT /api/admin/settings` read/update the singleton `platform_settings` row. PUT requires `support_email`, integer `default_seeker_ai_uses` and `default_company_ai_uses` (0–1000), `company_verification_mode=manual|automatic`, `maintenance_enabled`, and optional `maintenance_message_ar`/`maintenance_message_en`. New accounts receive the role's configured free AI quota; existing balances remain intact. Automatic mode approves companies when they submit a verification request. Public `GET /api/platform-config` exposes only support email and maintenance status/messages. During maintenance, non-admin operations return `503` with `code=MAINTENANCE_MODE`; admin routes, authentication entry, public config and Stripe webhooks remain reachable. Non-admin login and Google callback are denied.
+
+`GET /api/admin/subscriptions` lists unexpired Pro seeker/company accounts, with optional `role=seeker|company`, `search`, and `per_page=1..100` filters.
+
 - `GET /api/admin/stats` returns `total_seekers`, `total_companies`, `active_job_posts`, `total_applications`, `average_ai_match_score`, and `recent_activities` (up to 10 newest events, each `{ "type": "application | seeker_registered | company_registered | job_post_published", "occurred_at": "timestamp", "description": "...", "entity_id": 1 }`). Events are sorted newest first.
 - Admin statistics also return `total_revenue`, the sum of paid transaction amounts.
 - `GET /api/admin/verifications` lists pending companies.
@@ -146,7 +156,7 @@ When the free quota is exhausted, an uncached AI request returns HTTP `402`:
 - `GET /api/payments/demo-checkout/{paymentId}` returns plan/amount details and the confirmation method/URL for the owning account. `POST /api/payments/demo-confirm/{paymentId}` confirms only pending demo payments in local/testing environments when the Stripe secret is blank.
 - `POST /api/payments/webhook` requires Stripe's `Stripe-Signature` header. Signed successful Checkout events must match a payment's session ID, amount, currency, and paid state before Pro activation; expired or failed Checkout events mark matching pending transactions as failed. Repeated events are idempotent.
 - `GET /api/payments/history` returns only the authenticated seeker's or company's paginated payment history.
-- `GET /api/admin/payments` (admin only) returns paginated transactions. Optional filters: `status=pending|paid|failed`, `per_page=1..100`.
+- `GET /api/admin/payments` (admin only) returns paginated transactions plus `totals` grouped by currency, gateway and mode for all paid transactions, independent of page/status filter. Each transaction has `mode=demo|live|test|unknown` from gateway/session ID; unrecognized legacy Stripe sessions are `unknown`. Optional filters: `status=pending|paid|failed`, `per_page=1..100`.
 - Configure `STRIPE_KEY`, `STRIPE_SECRET`, and `STRIPE_WEBHOOK_SECRET` in `backend/.env`. Never commit live credentials.
 
 ## 8. Seeker CV Onboarding and Builder

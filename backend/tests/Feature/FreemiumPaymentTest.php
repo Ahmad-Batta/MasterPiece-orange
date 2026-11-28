@@ -141,7 +141,9 @@ class FreemiumPaymentTest extends TestCase
         $admin = Admin::query()->create(['username' => 'Billing Admin', 'email' => 'billing-admin@example.com', 'role' => 'admin', 'password' => 'secret-password']);
         Sanctum::actingAs($admin, ['role:admin']);
         $this->getJson('/api/admin/stats')->assertOk()->assertJsonPath('data.total_revenue', '9.99');
-        $this->getJson('/api/admin/payments?status=paid')->assertOk()->assertJsonPath('data.items.0.id', $payment->id);
+        $this->getJson('/api/admin/payments?status=paid')->assertOk()->assertJsonPath('data.items.0.id', $payment->id)
+            ->assertJsonPath('data.items.0.mode', 'test')->assertJsonPath('data.totals.0.currency', 'USD')
+            ->assertJsonPath('data.totals.0.transactions', 1);
     }
 
     public function test_signed_stripe_failure_event_marks_pending_payment_failed_without_upgrading(): void

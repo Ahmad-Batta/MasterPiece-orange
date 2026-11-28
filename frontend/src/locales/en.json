@@ -1,5 +1,7 @@
 {
-  "meta": { "title": "CareerHub — Find work that fits your path" },
+  "meta": {
+    "title": "CareerHub — Find work that fits your path"
+  },
   "common": {
     "skipToContent": "Skip to main content",
     "language": "Language",
@@ -248,6 +250,7 @@
   "auth": {
     "loginTitle": "Welcome back",
     "loginBody": "Sign in to continue to your CareerHub workspace.",
+    "maintenanceMessage": "The platform is under maintenance. Please try again later.",
     "unifiedNote": "One secure sign-in for seekers, companies, and administrators.",
     "registerTitle": "Make room for your next opportunity",
     "registerBody": "Create your account and start with a profile built around your goals.",
@@ -307,19 +310,86 @@
     },
     "navigation": {
       "overview": "Overview",
-      "usersCompanies": "Companies & Users",
-      "catalog": "Categories & Jobs"
+      "users": "Users",
+      "companies": "Companies & Verification",
+      "catalog": "Categories & Job Titles",
+      "jobs": "Job Posts",
+      "settings": "Settings",
+      "pendingVerifications": "{{count}} pending company verifications",
+      "payments": "Payments & subscriptions"
     },
-    "placeholder": {
-      "eyebrow": "Coming next",
-      "usersCompanies": {
-        "title": "Companies & Users",
-        "body": "Account search, company verification, and user management will be available here in the next admin step."
-      },
-      "catalog": {
-        "title": "Categories & Jobs",
-        "body": "Category and standardized job management will be available here in the next admin step."
-      }
+    "users": {
+      "eyebrow": "Account administration",
+      "title": "Users",
+      "subtitle": "Search and manage seeker and administrator accounts, their access status, and profile details.",
+      "addSeeker": "Create seeker"
+    },
+    "companies": {
+      "eyebrow": "Employer administration",
+      "title": "Companies & verification",
+      "subtitle": "Review company profiles, manage verification decisions, and control employer account access.",
+      "addCompany": "Create company"
+    },
+    "jobs": {
+      "eyebrow": "Published vacancies",
+      "title": "Job posts",
+      "subtitle": "Review company-published vacancies, update their details, and manage publication status."
+    },
+    "settings": {
+      "eyebrow": "Admin preferences",
+      "title": "Settings",
+      "subtitle": "Manage interface preferences, your account, and server-wide platform settings.",
+      "interfaceTitle": "Language & interface preferences",
+      "language": "Display language",
+      "languageDescription": "Switch the admin interface between Arabic and English.",
+      "tableDensity": "Admin table density",
+      "comfortable": "Comfortable",
+      "compact": "Compact",
+      "pendingBadge": "Show pending-verification badge",
+      "pendingBadgeDescription": "Show the current pending company verification count beside Companies in the sidebar.",
+      "accountTitle": "Admin account & security",
+      "profileLoadError": "Admin account details could not be loaded.",
+      "unknownAdmin": "Administrator",
+      "accountInfoTitle": "Account information",
+      "accountName": "Name",
+      "accountNamePlaceholder": "Enter your name",
+      "accountEmail": "Email address",
+      "accountEmailPlaceholder": "Enter your email address",
+      "accountReviewFields": "Please review the highlighted account fields.",
+      "accountNameInvalid": "Enter a valid name within the allowed length.",
+      "accountEmailInvalid": "Enter a valid email address that is not used by another account.",
+      "accountSaved": "Account information updated.",
+      "accountSaveError": "Could not update account information. Please try again.",
+      "passwordTitle": "Change password",
+      "currentPassword": "Current password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "Enter a new password",
+      "confirmNewPassword": "Confirm new password",
+      "confirmNewPasswordPlaceholder": "Enter the new password again",
+      "showPassword": "Show {{field}}",
+      "hidePassword": "Hide {{field}}",
+      "currentPasswordRequired": "Enter your current password.",
+      "currentPasswordIncorrect": "The current password is incorrect.",
+      "newPasswordInvalid": "Use a password with at least 8 characters and matching confirmation.",
+      "passwordReviewFields": "Please review the highlighted password fields.",
+      "passwordSaved": "Password updated successfully.",
+      "passwordSaveError": "Could not update your password. Please try again.",
+      "changePassword": "Update password",
+      "platformTitle": "Platform & support configuration",
+      "supportEmail": "Support contact email",
+      "saved": "Platform settings saved.",
+      "verificationMode": "Company verification mode",
+      "manual": "Manual review",
+      "automatic": "Automatic approval on verification request",
+      "default_seeker_ai_uses": "Free AI uses for new seekers",
+      "default_company_ai_uses": "Free AI uses for new companies",
+      "maintenanceEnabled": "Maintenance mode",
+      "maintenanceDescription": "Pause public and member API activity while administrators and Stripe webhooks remain available.",
+      "maintenanceMessageEN": "Maintenance message (English)",
+      "maintenanceMessageAR": "Maintenance message (Arabic)",
+      "platformLoadError": "Platform settings could not be loaded.",
+      "platformSaveError": "Platform settings could not be saved."
     },
     "overview": {
       "eyebrow": "Platform administration",
@@ -329,6 +399,35 @@
       "loadError": "We could not load platform statistics. Check the connection and try again.",
       "retry": "Try again",
       "metricsLabel": "CareerHub platform statistics"
+    },
+    "charts": {
+      "sectionLabel": "Interactive platform analytics charts",
+      "loadingLabel": "Loading platform charts",
+      "platformEyebrow": "Platform mix",
+      "platformTitle": "CareerHub ecosystem",
+      "platformSubtitle": "A snapshot of registered talent, employers, active roles, and applications.",
+      "platformAria": "Platform totals: {{count}} records",
+      "seekers": "Job seekers",
+      "companies": "Companies",
+      "activeJobs": "Active jobs",
+      "applications": "Applications",
+      "total": "Combined total",
+      "noPlatformData": "No platform totals are available yet.",
+      "trajectoryEyebrow": "Activity and revenue",
+      "trajectoryTitle": "Activity trajectory and revenue",
+      "trajectorySubtitle": "Daily registrations, published jobs, and applications over the past seven days.",
+      "trajectoryAria": "Daily platform activity trajectory for the past seven days",
+      "revenueTotal": "Paid revenue to date",
+      "dailyActivity": "{{count}} events",
+      "cumulativeActivity": "{{count}} events this week",
+      "pointAria": "{{date}}: {{count}} events",
+      "noRecentActivity": "No recorded activity in the past seven days.",
+      "specializationEyebrow": "Cross-disciplinary reach",
+      "specializationTitle": "Jobs by academic specialization",
+      "specializationSubtitle": "Active job posts grouped by the academic categories they serve.",
+      "noSpecializationData": "No active job counts by specialization are available yet.",
+      "unnamedCategory": "Unspecified specialization",
+      "categoryAria": "{{category}}: {{count}} active jobs"
     },
     "metrics": {
       "seekers": "Total seekers",
@@ -360,8 +459,8 @@
       "totalRevenue": "Paid revenue"
     },
     "actions": {
-      "manageUsers": "Manage companies & users",
-      "manageCatalog": "Manage categories & jobs"
+      "manageUsers": "Manage users",
+      "manageCatalog": "Manage categories & job titles"
     },
     "notifications": {
       "open": "Open notifications, {{count}} unread",
@@ -374,10 +473,6 @@
       "updateError": "Notification status could not be updated."
     },
     "usersCompanies": {
-      "eyebrow": "Account administration",
-      "title": "Companies and users",
-      "subtitle": "Review company verification requests and manage platform account access.",
-      "tabs": { "label": "Choose a management view", "companies": "Companies & verification", "users": "All users" },
       "companySearchPlaceholder": "Search company name or email",
       "userSearchPlaceholder": "Search user name or email",
       "verificationFilter": "Verification status",
@@ -387,11 +482,26 @@
         "all": "All companies",
         "pending": "Pending",
         "verified": "Verified",
-        "rejected": "Rejected"
+        "rejected": "Rejected",
+        "unverified": "Unverified"
       },
-      "roles": { "all": "All roles", "seeker": "Job seeker", "company": "Company", "admin": "Admin" },
-      "accountStatuses": { "all": "All statuses", "active": "Active", "inactive": "Suspended" },
-      "columns": { "account": "Company / account", "focus": "Academic / industry focus", "role": "Role", "verification": "Verification", "status": "Account status" },
+      "roles": {
+        "seeker": "Job seeker",
+        "company": "Company",
+        "admin": "Admin"
+      },
+      "accountStatuses": {
+        "all": "All statuses",
+        "active": "Active",
+        "inactive": "Suspended"
+      },
+      "columns": {
+        "account": "Company / account",
+        "focus": "Academic / industry focus",
+        "role": "Role",
+        "verification": "Verification",
+        "status": "Account status"
+      },
       "approve": "Approve",
       "verify": "Verify",
       "reject": "Reject",
@@ -401,6 +511,9 @@
       "rejected": "Company verification request rejected.",
       "suspended": "Account suspended.",
       "activated": "Account reactivated.",
+      "deleteAccount": "Deactivate",
+      "deleteConfirm": "Deactivate {{name}}? Their account data will be preserved.",
+      "deleted": "Account deactivated.",
       "actionError": "That change could not be saved. Please try again.",
       "selfSuspendBlocked": "You cannot suspend your own administrator account.",
       "focusUnavailable": "Not provided",
@@ -417,13 +530,12 @@
       "previousPage": "Go to previous page",
       "nextPage": "Go to next page",
       "modal": {
-        "addAccount": "Add user / company",
-        "createTitle": "Create account",
+        "createSeekerTitle": "Create seeker account",
+        "createCompanyTitle": "Create company account",
         "editTitle": "Edit account",
-        "createBody": "Create a seeker or company account with the details below.",
+        "createSeekerBody": "Create a job seeker account with the details below.",
+        "createCompanyBody": "Create a company account with the details below.",
         "editBody": "Update account details and access status.",
-        "optionalProfileHint": "Some profile fields are not included in the admin list. Leave optional fields blank to keep their current values.",
-        "adminCreateNote": "Administrator accounts are seeded and cannot be created from this form.",
         "roleLabel": "Account type",
         "nameLabel": "Full name or company name",
         "namePlaceholder": "Enter a name",
@@ -447,14 +559,23 @@
         "validationError": "Check this field and try again.",
         "createAction": "Create account",
         "created": "Account created.",
-        "updated": "Account updated."
+        "updated": "Account updated.",
+        "website": "Website",
+        "biography": "Biography",
+        "skills": "Skills (comma separated)",
+        "linkedin": "LinkedIn URL",
+        "github": "GitHub URL"
       }
     },
     "catalog": {
       "eyebrow": "Platform catalog",
-      "title": "Categories and job moderation",
-      "subtitle": "Maintain academic categories and review published vacancies across the platform.",
-      "tabs": { "label": "Choose a catalog view", "categories": "Academic categories", "standardJobs": "Standard job titles", "jobs": "Job posts" },
+      "title": "Categories and job titles",
+      "subtitle": "Maintain the academic category list and standardized job-title catalog.",
+      "tabs": {
+        "label": "Choose a catalog view",
+        "categories": "Academic categories",
+        "standardJobs": "Standard job titles"
+      },
       "countLabel": "{{count}} records",
       "page": "Page {{current}} of {{total}}",
       "previous": "Previous",
@@ -464,7 +585,10 @@
       "loadError": "We could not load this list. Check your connection and try again.",
       "retry": "Refresh list",
       "actionError": "That change could not be saved. Please try again.",
-      "status": { "active": "Active", "closed": "Closed" },
+      "status": {
+        "active": "Active",
+        "closed": "Closed"
+      },
       "forms": {
         "required": "This field is required.",
         "validationError": "Review this field and try again.",
@@ -515,8 +639,18 @@
         "categoryFilter": "Academic category",
         "allCategories": "All categories",
         "statusFilter": "Publication status",
-        "statusOptions": { "all": "All statuses", "active": "Active", "closed": "Closed" },
-        "columns": { "job": "Job title", "company": "Company", "category": "Academic category", "locationType": "Location / type", "status": "Status" },
+        "statusOptions": {
+          "all": "All statuses",
+          "active": "Active",
+          "closed": "Closed"
+        },
+        "columns": {
+          "job": "Job title",
+          "company": "Company",
+          "category": "Academic category",
+          "locationType": "Location / type",
+          "status": "Status"
+        },
         "companyUnknown": "Company not listed",
         "categoryUnknown": "Category not listed",
         "locationUnknown": "Location not listed",
@@ -547,6 +681,37 @@
         "emptyTitle": "No standard job titles found",
         "emptyBody": "Create a title or adjust your search and category filter."
       }
+    },
+    "payments": {
+      "title": "Payments & subscriptions",
+      "subtitle": "Review transactions, paid totals, and currently active Pro accounts.",
+      "history": "Payment history",
+      "subscriptions": "Active Pro subscriptions",
+      "role": "Account type",
+      "name": "Account",
+      "plan": "Plan",
+      "amount": "Amount",
+      "gateway": "Gateway",
+      "mode": "Mode",
+      "status": "Status",
+      "date": "Date",
+      "expires": "Expires",
+      "all": "All statuses",
+      "paid": "Paid",
+      "pending": "Pending",
+      "failed": "Failed",
+      "demo": "Demo",
+      "live": "Live",
+      "test": "Test",
+      "unknown": "Unknown",
+      "seeker": "Seeker",
+      "company": "Company",
+      "allRoles": "All roles",
+      "empty": "No records match these filters.",
+      "error": "Could not load payment information.",
+      "revenue": "Paid totals",
+      "transactions": "transactions",
+      "search": "Search account name or email"
     }
   },
   "dashboard": {

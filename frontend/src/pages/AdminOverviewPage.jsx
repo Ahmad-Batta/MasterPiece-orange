@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowUpRight, BriefcaseBusiness, Building2, ChartNoAxesCombined, CircleDollarSign, FileText, RefreshCw, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +51,200 @@ function formatActivityDate(value, language) {
   return new Intl.DateTimeFormat(language === 'ar' ? 'ar-JO' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
+function buildActivitySeries(days, language) {
+  let cumulative = 0;
+  const formatter = new Intl.DateTimeFormat(language === 'ar' ? 'ar-JO' : 'en-US', { weekday: 'short' });
+  return days.map((day) => {
+    const date = new Date(`${day.date}T12:00:00`);
+    const events = Number(day.events) || 0;
+    cumulative += events;
+    return { date, label: formatter.format(date), events, cumulative };
+  });
+}
+
+function splinePath(points) {
+  if (!points.length) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  return points.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+    const previous = points[index - 1];
+    const beforePrevious = points[index - 2] || previous;
+    const next = points[index + 1] || point;
+    const controlOne = { x: previous.x + (point.x - beforePrevious.x) / 6, y: previous.y + (point.y - beforePrevious.y) / 6 };
+    const controlTwo = { x: point.x - (next.x - previous.x) / 6, y: point.y - (next.y - previous.y) / 6 };
+    return `${path} C ${controlOne.x} ${controlOne.y}, ${controlTwo.x} ${controlTwo.y}, ${point.x} ${point.y}`;
+  }, '');
+}
+
+function PlatformDonut({ stats, t, number, reducedMotion }) {
+  const [activeKey, setActiveKey] = useState(null);
+  const segments = [
+    { key: 'seekers', value: Number(stats.total_seekers) || 0, color: '#2B362E' },
+    { key: 'companies', value: Number(stats.total_companies) || 0, color: '#5C6F61' },
+    { key: 'activeJobs', value: Number(stats.active_job_posts) || 0, color: '#A37E5E' },
+    { key: 'applications', value: Number(stats.total_applications) || 0, color: '#2B362E', opacity: 0.42 },
+  ];
+  const total = segments.reduce((sum, segment) => sum + Math.max(0, segment.value), 0);
+  const circumference = 2 * Math.PI * 66;
+  let offset = 0;
+  const activeSegment = segments.find((segment) => segment.key === activeKey);
+
+  return (
+    <article className="rounded-xl border border-[#2B362E]/10 bg-white p-6 shadow-sm lg:col-span-5">
+      <p className="text-xs font-semibold tracking-wide text-[#A37E5E]">{t('admin.charts.platformEyebrow')}</p>
+      <h2 className="mt-2 text-base font-semibold text-[#2B362E] sm:text-lg">{t('admin.charts.platformTitle')}</h2>
+      <p className="mt-1 max-w-prose text-xs leading-7 text-[#1C221E]/70">{t('admin.charts.platformSubtitle')}</p>
+
+      <div className="mt-5 grid items-center gap-5 sm:grid-cols-[minmax(10rem,0.9fr)_minmax(0,1.1fr)]">
+        <div className="relative mx-auto aspect-square w-full max-w-52" role="img" aria-label={t('admin.charts.platformAria', { count: number(total) })}>
+          <svg className="h-full w-full overflow-visible" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="66" fill="none" stroke="#FAF9F5" strokeWidth="15" />
+            {total > 0 && segments.map((segment, index) => {
+              const value = Math.max(0, segment.value);
+              const length = (value / total) * circumference;
+              const currentOffset = offset;
+              offset += length;
+              return (
+                <motion.circle
+                  key={segment.key}
+                  cx="100"
+                  cy="100"
+                  r="66"
+                  fill="none"
+                  stroke={segment.color}
+                  strokeOpacity={segment.opacity ?? 1}
+                  strokeWidth={activeKey === segment.key ? 19 : 15}
+                  strokeDasharray={`${length} ${circumference - length}`}
+                  strokeDashoffset={-currentOffset}
+                  strokeLinecap="butt"
+                  transform="rotate(-90 100 100)"
+                  initial={{ opacity: 0, strokeDashoffset: -(currentOffset + length) }}
+                  animate={{ opacity: activeKey && activeKey !== segment.key ? 0.45 : 1, strokeDashoffset: -currentOffset }}
+                  transition={{ duration: reducedMotion ? 0 : 0.55, delay: reducedMotion ? 0 : index * 0.07 }}
+                  onMouseEnter={() => setActiveKey(segment.key)}
+                  onMouseLeave={() => setActiveKey(null)}
+                />
+              );
+            })}
+          </svg>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="max-w-28 text-[10px] font-medium leading-relaxed text-[#1C221E]/65">{activeSegment ? t(`admin.charts.${activeSegment.key}`) : t('admin.charts.total')}</span>
+            <strong className="tabular-nums text-2xl font-semibold tracking-tight text-[#2B362E]">{number(activeSegment?.value ?? total)}</strong>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          {segments.map((segment) => (
+            <button key={segment.key} className={`flex min-h-10 items-center justify-between gap-3 rounded-lg border px-3 text-start transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] ${activeKey === segment.key ? 'border-[#2B362E]/20 bg-[#FAF9F5]' : 'border-[#2B362E]/10 bg-white hover:bg-[#FAF9F5]'}`} type="button" onMouseEnter={() => setActiveKey(segment.key)} onMouseLeave={() => setActiveKey(null)} onFocus={() => setActiveKey(segment.key)} onBlur={() => setActiveKey(null)}>
+              <span className="flex min-w-0 items-center gap-2 text-xs text-[#1C221E]"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: segment.color, opacity: segment.opacity ?? 1 }} />{t(`admin.charts.${segment.key}`)}</span>
+              <span className="tabular-nums text-xs font-semibold text-[#2B362E]">{number(segment.value)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      {total === 0 && <p className="mt-3 text-xs leading-7 text-[#1C221E]/70">{t('admin.charts.noPlatformData')}</p>}
+    </article>
+  );
+}
+
+function ActivityTrajectory({ series, revenue, t, number, language, reducedMotion }) {
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const chart = { left: 44, right: 612, top: 38, bottom: 190 };
+  const maximum = Math.max(1, ...series.map((point) => point.events));
+  const points = series.map((point, index) => ({
+    ...point,
+    x: chart.left + (index * (chart.right - chart.left)) / Math.max(1, series.length - 1),
+    y: chart.bottom - (point.events / maximum) * (chart.bottom - chart.top),
+  }));
+  const line = splinePath(points);
+  const area = `${line} L ${chart.right} ${chart.bottom} L ${chart.left} ${chart.bottom} Z`;
+  const active = points[selectedIndex ?? points.length - 1];
+  const dateText = active ? new Intl.DateTimeFormat(language === 'ar' ? 'ar-JO' : 'en-US', { dateStyle: 'medium' }).format(active.date) : '';
+
+  return (
+    <article className="rounded-xl border border-[#2B362E]/10 bg-white p-6 shadow-sm lg:col-span-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-[#A37E5E]">{t('admin.charts.trajectoryEyebrow')}</p>
+          <h2 className="mt-2 text-base font-semibold text-[#2B362E] sm:text-lg">{t('admin.charts.trajectoryTitle')}</h2>
+          <p className="mt-1 max-w-prose text-xs leading-7 text-[#1C221E]/70">{t('admin.charts.trajectorySubtitle')}</p>
+        </div>
+        <div className="rounded-lg border border-[#2B362E]/10 bg-[#FAF9F5] px-3 py-2">
+          <p className="text-[10px] font-medium text-[#1C221E]/65">{t('admin.charts.revenueTotal')}</p>
+          <p className="tabular-nums text-sm font-semibold text-[#2B362E]">{number(revenue)}</p>
+        </div>
+      </div>
+
+      <div className="relative mt-4" onMouseLeave={() => setSelectedIndex(null)}>
+        {active && <div className="pointer-events-none absolute end-2 top-2 z-10 rounded-lg border border-[#2B362E]/10 bg-white/95 px-3 py-2 text-xs shadow-sm" role="status" aria-live="polite">
+          <p className="font-semibold text-[#2B362E]">{dateText}</p>
+          <p className="mt-1 tabular-nums text-[#1C221E]/75">{t('admin.charts.dailyActivity', { count: number(active.events) })}</p>
+          <p className="tabular-nums text-[#1C221E]/75">{t('admin.charts.cumulativeActivity', { count: number(active.cumulative) })}</p>
+        </div>}
+        <svg className="h-auto w-full overflow-visible" viewBox="0 0 640 230" role="group" aria-label={t('admin.charts.trajectoryAria')}>
+          <defs>
+            <linearGradient id="admin-activity-fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#2B362E" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#2B362E" stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+          {[0, 1, 2, 3].map((step) => {
+            const y = chart.top + (step * (chart.bottom - chart.top)) / 3;
+            return <line key={step} x1={chart.left} x2={chart.right} y1={y} y2={y} stroke="#2B362E" strokeOpacity="0.12" strokeDasharray="4 6" />;
+          })}
+          <motion.path d={area} fill="url(#admin-activity-fill)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.6 }} />
+          <motion.path d={line} fill="none" stroke="#2B362E" strokeWidth="3" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut' }} />
+          {points.map((point, index) => (
+            <g key={point.date.toISOString()} onMouseEnter={() => setSelectedIndex(index)} onFocus={() => setSelectedIndex(index)}>
+              <circle cx={point.x} cy={point.y} r="12" fill="transparent" />
+              <motion.circle className="cursor-crosshair focus-visible:outline-none focus-visible:stroke-[#A37E5E] focus-visible:stroke-[4]" cx={point.x} cy={point.y} r={selectedIndex === index ? 5 : 3.5} fill="#FAF9F5" stroke="#2B362E" strokeWidth="2.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.25, delay: reducedMotion ? 0 : index * 0.04 }} tabIndex={0} role="button" aria-label={t('admin.charts.pointAria', { date: new Intl.DateTimeFormat(language === 'ar' ? 'ar-JO' : 'en-US', { dateStyle: 'medium' }).format(point.date), count: number(point.events) })} />
+            </g>
+          ))}
+          {points.filter((_, index) => index % 2 === 0 || index === points.length - 1).map((point) => <text key={`label-${point.date.toISOString()}`} x={point.x} y="218" textAnchor="middle" fill="#1C221E" fillOpacity="0.65" className="text-[10px]">{point.label}</text>)}
+        </svg>
+        {series.every((point) => point.events === 0) && <p className="mt-1 text-center text-xs text-[#1C221E]/65">{t('admin.charts.noRecentActivity')}</p>}
+      </div>
+    </article>
+  );
+}
+
+function SpecializationBars({ categories, t, number, reducedMotion }) {
+  const rows = [...categories]
+    .map((item) => ({ ...item, count: Math.max(0, Number(item.count) || 0), label: item.category ?? item.category_name ?? item.name ?? '' }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 7);
+  const maximum = Math.max(1, ...rows.map((item) => item.count));
+
+  return (
+    <article className="rounded-xl border border-[#2B362E]/10 bg-white p-6 shadow-sm lg:col-span-12">
+      <p className="text-xs font-semibold tracking-wide text-[#A37E5E]">{t('admin.charts.specializationEyebrow')}</p>
+      <h2 className="mt-2 text-base font-semibold text-[#2B362E] sm:text-lg">{t('admin.charts.specializationTitle')}</h2>
+      <p className="mt-1 max-w-prose text-xs leading-7 text-[#1C221E]/70">{t('admin.charts.specializationSubtitle')}</p>
+      {rows.length === 0 ? (
+        <div className="mt-5 rounded-lg bg-[#FAF9F5] p-4 text-xs leading-7 text-[#1C221E]/70">{t('admin.charts.noSpecializationData')}</div>
+      ) : (
+        <div className="mt-5 grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map((item, index) => {
+            const percentage = (item.count / maximum) * 100;
+            return (
+              <div key={item.category_id ?? item.id ?? item.label} role="img" aria-label={t('admin.charts.categoryAria', { category: item.label, count: number(item.count) })}>
+                <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                  <span className="min-w-0 truncate font-medium text-[#1C221E]" dir="auto">{item.label || t('admin.charts.unnamedCategory')}</span>
+                  <span className="tabular-nums shrink-0 font-semibold text-[#2B362E]">{number(item.count)}</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-[#FAF9F5]">
+                  <motion.div className="h-full rounded-full" style={{ backgroundColor: index % 3 === 1 ? '#5C6F61' : (index % 3 === 2 ? '#A37E5E' : '#2B362E') }} initial={{ width: 0 }} animate={{ width: `${percentage}%` }} transition={{ duration: reducedMotion ? 0 : 0.55, delay: reducedMotion ? 0 : index * 0.04, ease: 'easeOut' }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </article>
+  );
+}
+
 const activityIcons = {
   application: FileText,
   seeker_registered: Users,
@@ -60,6 +254,7 @@ const activityIcons = {
 
 export default function AdminOverviewPage() {
   const { t, i18n } = useTranslation();
+  const reducedMotion = useReducedMotion();
   const [stats, setStats] = useState(null);
   const [pendingVerifications, setPendingVerifications] = useState(null);
   const [paidTransactions, setPaidTransactions] = useState(null);
@@ -85,7 +280,7 @@ export default function AdminOverviewPage() {
     }
 
     if (results[1].status === 'fulfilled') {
-      setPendingVerifications(getApiItems(getApiData(results[1].value), ['items', 'companies', 'data']).length);
+      setPendingVerifications(paginationTotal(getApiData(results[1].value)));
     } else {
       setPendingVerifications(null);
     }
@@ -105,6 +300,8 @@ export default function AdminOverviewPage() {
   }, [loadOverview]);
 
   const activities = useMemo(() => Array.isArray(stats?.recent_activities) ? stats.recent_activities.slice(0, 10) : [], [stats]);
+  const activitySeries = useMemo(() => buildActivitySeries(stats?.activity_daily || [], i18n.language), [stats, i18n.language]);
+  const categorySeries = Array.isArray(stats?.jobs_by_category) ? stats.jobs_by_category : [];
   const number = (value) => formatCount(value, i18n.language);
 
   const metrics = [
@@ -155,6 +352,20 @@ export default function AdminOverviewPage() {
         </div>
       </section>
 
+      {isLoading ? (
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-12" aria-label={t('admin.charts.loadingLabel')} aria-busy="true">
+          <div className="animate-pulse rounded-xl border border-[#2B362E]/10 bg-white p-6 lg:col-span-5"><div className="h-4 w-1/2 rounded-lg bg-[#E5E2DC]/60" /><div className="mt-5 h-48 rounded-lg bg-[#E5E2DC]/60" /></div>
+          <div className="animate-pulse rounded-xl border border-[#2B362E]/10 bg-white p-6 lg:col-span-7"><div className="h-4 w-1/2 rounded-lg bg-[#E5E2DC]/60" /><div className="mt-5 h-48 rounded-lg bg-[#E5E2DC]/60" /></div>
+          <div className="animate-pulse rounded-xl border border-[#2B362E]/10 bg-white p-6 lg:col-span-12"><div className="h-4 w-1/3 rounded-lg bg-[#E5E2DC]/60" /><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2, 3, 4, 5].map((item) => <div key={item} className="h-10 rounded-lg bg-[#E5E2DC]/60" />)}</div></div>
+        </section>
+      ) : stats && (
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-12" aria-label={t('admin.charts.sectionLabel')}>
+          <PlatformDonut stats={stats} t={t} number={number} reducedMotion={reducedMotion} />
+          <ActivityTrajectory series={activitySeries} revenue={stats.total_revenue} t={t} number={number} language={i18n.language} reducedMotion={reducedMotion} />
+          <SpecializationBars categories={categorySeries} t={t} number={number} reducedMotion={reducedMotion} />
+        </section>
+      )}
+
       {!isLoading && stats && (
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(16rem,0.85fr)]">
           <article className="rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-sm">
@@ -171,13 +382,13 @@ export default function AdminOverviewPage() {
                 <ChartNoAxesCombined className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />
                 <h3 className="text-sm font-semibold text-[#2B362E]">{t('admin.activities.emptyTitle')}</h3>
                 <p className="max-w-prose text-xs leading-relaxed text-[#1C221E]/75">{t('admin.activities.emptyBody')}</p>
-                <Link className="button-primary h-10 px-4 text-xs" to="/admin/users-companies">{t('admin.actions.manageUsers')}</Link>
+                <Link className="button-primary h-10 px-4 text-xs" to="/admin/users">{t('admin.actions.manageUsers')}</Link>
               </div>
             ) : (
               <ol className="divide-y divide-[#E5E2DC]">
                 {activities.map((activity, index) => {
                   const Icon = activityIcons[activity.type] || FileText;
-                  const link = activity.type === 'job_post_published' ? '/admin/catalog' : '/admin/users-companies';
+                  const link = activity.type === 'job_post_published' ? '/admin/jobs' : activity.type === 'company_registered' ? '/admin/companies' : '/admin/users';
                   const translationKey = `admin.activities.types.${activity.type}`;
 
                   return (
@@ -214,7 +425,7 @@ export default function AdminOverviewPage() {
                 <span className="inline-flex items-center gap-2 text-xs text-[#1C221E]/75"><CircleDollarSign className="h-4 w-4 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" />{t('admin.summary.totalRevenue')}</span>
                 <span className="tabular-nums text-sm font-semibold text-[#2B362E]">{stats.total_revenue == null ? '—' : number(stats.total_revenue)}</span>
               </div>
-              <Link className="button-primary h-10 w-full px-4 text-xs" to="/admin/users-companies">{t('admin.actions.manageUsers')}<ArrowUpRight className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" /></Link>
+              <Link className="button-primary h-10 w-full px-4 text-xs" to="/admin/users">{t('admin.actions.manageUsers')}<ArrowUpRight className="h-4 w-4 rtl:rotate-180" strokeWidth={1.75} aria-hidden="true" /></Link>
               <Link className="button-secondary h-10 w-full px-4 text-xs" to="/admin/catalog">{t('admin.actions.manageCatalog')}</Link>
             </div>
           </aside>

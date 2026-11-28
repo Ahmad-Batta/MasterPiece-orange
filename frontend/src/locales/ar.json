@@ -1,5 +1,7 @@
 {
-  "meta": { "title": "CareerHub — فرص تناسب مسارك" },
+  "meta": {
+    "title": "CareerHub — فرص تناسب مسارك"
+  },
   "common": {
     "skipToContent": "انتقل إلى المحتوى الرئيسي",
     "language": "اللغة",
@@ -248,6 +250,7 @@
   "auth": {
     "loginTitle": "أهلًا بعودتك",
     "loginBody": "سجّل الدخول للمتابعة إلى مساحة CareerHub الخاصة بك.",
+    "maintenanceMessage": "المنصة قيد الصيانة. يرجى المحاولة لاحقًا.",
     "unifiedNote": "تسجيل دخول موحّد للباحثين والشركات والمشرفين.",
     "registerTitle": "ابدأ طريقك نحو فرصتك القادمة",
     "registerBody": "أنشئ حسابك وابدأ بملف شخصي يعكس أهدافك.",
@@ -307,19 +310,86 @@
     },
     "navigation": {
       "overview": "نظرة عامة",
-      "usersCompanies": "الشركات والمستخدمون",
-      "catalog": "التخصصات والوظائف"
+      "users": "المستخدمون",
+      "companies": "الشركات والتوثيق",
+      "catalog": "التخصصات والمسميات الوظيفية",
+      "jobs": "إعلانات الوظائف",
+      "settings": "الإعدادات",
+      "pendingVerifications": "{{count}} طلب توثيق شركة معلّق",
+      "payments": "المدفوعات والاشتراكات"
     },
-    "placeholder": {
-      "eyebrow": "قريبًا",
-      "usersCompanies": {
-        "title": "الشركات والمستخدمون",
-        "body": "ستتوفر هنا في الخطوة الإدارية التالية أدوات البحث عن الحسابات وتوثيق الشركات وإدارة المستخدمين."
-      },
-      "catalog": {
-        "title": "التخصصات والوظائف",
-        "body": "ستتوفر هنا في الخطوة الإدارية التالية إدارة التخصصات والمسميات الوظيفية الموحدة."
-      }
+    "users": {
+      "eyebrow": "إدارة الحسابات",
+      "title": "المستخدمون",
+      "subtitle": "ابحث عن حسابات الباحثين عن عمل والمشرفين وأدر صلاحياتها وحالاتها وتفاصيلها.",
+      "addSeeker": "إنشاء حساب باحث"
+    },
+    "companies": {
+      "eyebrow": "إدارة جهات التوظيف",
+      "title": "الشركات والتوثيق",
+      "subtitle": "راجع ملفات الشركات وقرارات التوثيق، وأدر صلاحيات حسابات جهات التوظيف.",
+      "addCompany": "إنشاء شركة"
+    },
+    "jobs": {
+      "eyebrow": "الوظائف المنشورة",
+      "title": "إعلانات الوظائف",
+      "subtitle": "راجع الوظائف التي تنشرها الشركات، وعدّل تفاصيلها وأدر حالة النشر."
+    },
+    "settings": {
+      "eyebrow": "تفضيلات المشرف",
+      "title": "الإعدادات",
+      "subtitle": "إدارة تفضيلات الواجهة وحسابك وإعدادات المنصة المحفوظة على الخادم.",
+      "interfaceTitle": "اللغة وتفضيلات الواجهة",
+      "language": "لغة العرض",
+      "languageDescription": "بدّل واجهة الإدارة بين العربية والإنجليزية.",
+      "tableDensity": "كثافة جداول الإدارة",
+      "comfortable": "مريحة",
+      "compact": "مضغوطة",
+      "pendingBadge": "إظهار شارة طلبات التوثيق المعلّقة",
+      "pendingBadgeDescription": "اعرض عدد طلبات توثيق الشركات المعلّقة بجانب قسم الشركات في القائمة الجانبية.",
+      "accountTitle": "حساب المشرف والأمان",
+      "profileLoadError": "تعذّر تحميل تفاصيل حساب المشرف.",
+      "unknownAdmin": "مشرف النظام",
+      "accountInfoTitle": "معلومات الحساب",
+      "accountName": "الاسم",
+      "accountNamePlaceholder": "أدخل اسمك",
+      "accountEmail": "البريد الإلكتروني",
+      "accountEmailPlaceholder": "أدخل بريدك الإلكتروني",
+      "accountReviewFields": "يرجى مراجعة حقول الحساب المحددة.",
+      "accountNameInvalid": "أدخل اسمًا صحيحًا ضمن الطول المسموح.",
+      "accountEmailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا غير مستخدم في حساب آخر.",
+      "accountSaved": "تم تحديث معلومات الحساب.",
+      "accountSaveError": "تعذّر تحديث معلومات الحساب. حاول مرة أخرى.",
+      "passwordTitle": "تغيير كلمة المرور",
+      "currentPassword": "كلمة المرور الحالية",
+      "currentPasswordPlaceholder": "أدخل كلمة المرور الحالية",
+      "newPassword": "كلمة المرور الجديدة",
+      "newPasswordPlaceholder": "أدخل كلمة مرور جديدة",
+      "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+      "confirmNewPasswordPlaceholder": "أعد إدخال كلمة المرور الجديدة",
+      "showPassword": "إظهار {{field}}",
+      "hidePassword": "إخفاء {{field}}",
+      "currentPasswordRequired": "أدخل كلمة المرور الحالية.",
+      "currentPasswordIncorrect": "كلمة المرور الحالية غير صحيحة.",
+      "newPasswordInvalid": "استخدم كلمة مرور من 8 أحرف على الأقل مع تأكيد مطابق.",
+      "passwordReviewFields": "يرجى مراجعة حقول كلمة المرور المحددة.",
+      "passwordSaved": "تم تحديث كلمة المرور بنجاح.",
+      "passwordSaveError": "تعذّر تحديث كلمة المرور. حاول مرة أخرى.",
+      "changePassword": "تحديث كلمة المرور",
+      "platformTitle": "إعدادات المنصة والدعم",
+      "supportEmail": "بريد التواصل للدعم",
+      "saved": "تم حفظ إعدادات المنصة.",
+      "verificationMode": "طريقة توثيق الشركات",
+      "manual": "مراجعة يدوية",
+      "automatic": "موافقة تلقائية عند طلب التوثيق",
+      "default_seeker_ai_uses": "استخدامات الذكاء الاصطناعي المجانية للباحثين الجدد",
+      "default_company_ai_uses": "استخدامات الذكاء الاصطناعي المجانية للشركات الجديدة",
+      "maintenanceEnabled": "وضع الصيانة",
+      "maintenanceDescription": "إيقاف واجهات الزوار والأعضاء مؤقتًا مع إبقاء وصول المشرفين وطلبات Stripe.",
+      "maintenanceMessageEN": "رسالة الصيانة بالإنجليزية",
+      "maintenanceMessageAR": "رسالة الصيانة بالعربية",
+      "platformLoadError": "تعذّر تحميل إعدادات المنصة.",
+      "platformSaveError": "تعذّر حفظ إعدادات المنصة."
     },
     "overview": {
       "eyebrow": "إدارة المنصة",
@@ -329,6 +399,35 @@
       "loadError": "تعذّر تحميل إحصاءات المنصة. تحقّق من الاتصال ثم حاول مجددًا.",
       "retry": "أعد المحاولة",
       "metricsLabel": "إحصاءات منصة CareerHub"
+    },
+    "charts": {
+      "sectionLabel": "رسوم تفاعلية لإحصاءات المنصة",
+      "loadingLabel": "جارٍ تحميل رسوم المنصة",
+      "platformEyebrow": "توزيع المنصة",
+      "platformTitle": "منظومة CareerHub",
+      "platformSubtitle": "لمحة عن الباحثين عن عمل والشركات والوظائف النشطة وطلبات التقديم.",
+      "platformAria": "إجمالي سجلات المنصة: {{count}}",
+      "seekers": "الباحثون عن عمل",
+      "companies": "الشركات",
+      "activeJobs": "الوظائف النشطة",
+      "applications": "طلبات التقديم",
+      "total": "الإجمالي",
+      "noPlatformData": "لا تتوفر إحصاءات للمنصة حتى الآن.",
+      "trajectoryEyebrow": "النشاط والإيرادات",
+      "trajectoryTitle": "مسار النشاط والإيرادات",
+      "trajectorySubtitle": "التسجيلات والوظائف المنشورة والطلبات خلال الأيام السبعة الماضية.",
+      "trajectoryAria": "مسار نشاط المنصة اليومي خلال الأيام السبعة الماضية",
+      "revenueTotal": "إجمالي الإيرادات المدفوعة",
+      "dailyActivity": "{{count}} أحداث",
+      "cumulativeActivity": "{{count}} أحداث هذا الأسبوع",
+      "pointAria": "{{date}}: {{count}} أحداث",
+      "noRecentActivity": "لا توجد أنشطة مسجلة خلال الأيام السبعة الماضية.",
+      "specializationEyebrow": "تخصصات متنوعة",
+      "specializationTitle": "الوظائف حسب التخصص الأكاديمي",
+      "specializationSubtitle": "إعلانات الوظائف النشطة موزعة حسب التخصصات الأكاديمية المرتبطة بها.",
+      "noSpecializationData": "لا تتوفر أعداد للوظائف النشطة حسب التخصص حتى الآن.",
+      "unnamedCategory": "تخصص غير محدد",
+      "categoryAria": "{{category}}: {{count}} وظيفة نشطة"
     },
     "metrics": {
       "seekers": "إجمالي الباحثين عن عمل",
@@ -360,8 +459,8 @@
       "totalRevenue": "الإيرادات المدفوعة"
     },
     "actions": {
-      "manageUsers": "إدارة الشركات والمستخدمين",
-      "manageCatalog": "إدارة التخصصات والوظائف"
+      "manageUsers": "إدارة المستخدمين",
+      "manageCatalog": "إدارة التخصصات والمسميات الوظيفية"
     },
     "notifications": {
       "open": "فتح الإشعارات، {{count}} غير مقروء",
@@ -374,10 +473,6 @@
       "updateError": "تعذّر تحديث حالة الإشعار."
     },
     "usersCompanies": {
-      "eyebrow": "إدارة الحسابات",
-      "title": "الشركات والمستخدمون",
-      "subtitle": "راجع طلبات توثيق الشركات وأدر صلاحيات الوصول إلى حسابات المنصة.",
-      "tabs": { "label": "اختر طريقة العرض", "companies": "الشركات والتوثيق", "users": "جميع المستخدمين" },
       "companySearchPlaceholder": "ابحث باسم الشركة أو بريدها الإلكتروني",
       "userSearchPlaceholder": "ابحث باسم المستخدم أو بريده الإلكتروني",
       "verificationFilter": "حالة التوثيق",
@@ -387,11 +482,26 @@
         "all": "كل الشركات",
         "pending": "قيد المراجعة",
         "verified": "موثقة",
-        "rejected": "مرفوضة"
+        "rejected": "مرفوضة",
+        "unverified": "غير موثق"
       },
-      "roles": { "all": "كل الأدوار", "seeker": "باحث عن عمل", "company": "شركة", "admin": "مشرف" },
-      "accountStatuses": { "all": "كل الحالات", "active": "نشط", "inactive": "موقوف" },
-      "columns": { "account": "الشركة / الحساب", "focus": "التخصص / المجال", "role": "الدور", "verification": "التوثيق", "status": "حالة الحساب" },
+      "roles": {
+        "seeker": "باحث عن عمل",
+        "company": "شركة",
+        "admin": "مشرف"
+      },
+      "accountStatuses": {
+        "all": "كل الحالات",
+        "active": "نشط",
+        "inactive": "موقوف"
+      },
+      "columns": {
+        "account": "الشركة / الحساب",
+        "focus": "التخصص / المجال",
+        "role": "الدور",
+        "verification": "التوثيق",
+        "status": "حالة الحساب"
+      },
       "approve": "موافقة",
       "verify": "توثيق",
       "reject": "رفض",
@@ -401,6 +511,9 @@
       "rejected": "تم رفض طلب توثيق الشركة.",
       "suspended": "تم إيقاف الحساب.",
       "activated": "تمت إعادة تفعيل الحساب.",
+      "deleteAccount": "تعطيل",
+      "deleteConfirm": "هل تريد تعطيل {{name}}؟ ستبقى بيانات الحساب محفوظة.",
+      "deleted": "تم تعطيل الحساب.",
       "actionError": "تعذّر حفظ التغيير. حاول مرة أخرى.",
       "selfSuspendBlocked": "لا يمكنك إيقاف حساب المشرف الخاص بك.",
       "focusUnavailable": "غير محدد",
@@ -417,13 +530,12 @@
       "previousPage": "الانتقال إلى الصفحة السابقة",
       "nextPage": "الانتقال إلى الصفحة التالية",
       "modal": {
-        "addAccount": "إضافة مستخدم / شركة",
-        "createTitle": "إنشاء حساب",
+        "createSeekerTitle": "إنشاء حساب باحث عن عمل",
+        "createCompanyTitle": "إنشاء حساب شركة",
         "editTitle": "تعديل الحساب",
-        "createBody": "أنشئ حساب باحث عن عمل أو شركة باستخدام البيانات التالية.",
+        "createSeekerBody": "أنشئ حساب باحث عن عمل باستخدام البيانات التالية.",
+        "createCompanyBody": "أنشئ حساب شركة باستخدام البيانات التالية.",
         "editBody": "عدّل بيانات الحساب وحالة الوصول.",
-        "optionalProfileHint": "بعض تفاصيل الملف الشخصي غير متاحة في قائمة الإدارة. اترك الحقول الاختيارية فارغة للحفاظ على قيمها الحالية.",
-        "adminCreateNote": "حسابات المشرفين تُضاف عبر بيانات التهيئة ولا يمكن إنشاؤها من هذا النموذج.",
         "roleLabel": "نوع الحساب",
         "nameLabel": "الاسم الكامل أو اسم الشركة",
         "namePlaceholder": "أدخل الاسم",
@@ -447,14 +559,23 @@
         "validationError": "تحقق من هذا الحقل ثم حاول مجددًا.",
         "createAction": "إنشاء الحساب",
         "created": "تم إنشاء الحساب.",
-        "updated": "تم تحديث الحساب."
+        "updated": "تم تحديث الحساب.",
+        "website": "الموقع الإلكتروني",
+        "biography": "النبذة الشخصية",
+        "skills": "المهارات (مفصولة بفواصل)",
+        "linkedin": "رابط LinkedIn",
+        "github": "رابط GitHub"
       }
     },
     "catalog": {
       "eyebrow": "كتالوج المنصة",
-      "title": "التخصصات ومراجعة الوظائف",
-      "subtitle": "أدر التصنيفات الأكاديمية وراجع الوظائف المنشورة في المنصة.",
-      "tabs": { "label": "اختر طريقة عرض الكتالوج", "categories": "التخصصات الأكاديمية", "standardJobs": "المسميات الوظيفية الموحدة", "jobs": "إعلانات الوظائف" },
+      "title": "التخصصات والمسميات الوظيفية",
+      "subtitle": "أدر قائمة التصنيفات الأكاديمية وكتالوج المسميات الوظيفية الموحدة.",
+      "tabs": {
+        "label": "اختر طريقة عرض الكتالوج",
+        "categories": "التخصصات الأكاديمية",
+        "standardJobs": "المسميات الوظيفية الموحدة"
+      },
       "countLabel": "{{count}} سجلًا",
       "page": "الصفحة {{current}} من {{total}}",
       "previous": "السابقة",
@@ -464,7 +585,10 @@
       "loadError": "تعذّر تحميل القائمة. تحقق من الاتصال وحاول مجددًا.",
       "retry": "تحديث القائمة",
       "actionError": "تعذّر حفظ التغيير. حاول مرة أخرى.",
-      "status": { "active": "نشطة", "closed": "مغلقة" },
+      "status": {
+        "active": "نشطة",
+        "closed": "مغلقة"
+      },
       "forms": {
         "required": "هذا الحقل مطلوب.",
         "validationError": "راجع هذا الحقل ثم حاول مجددًا.",
@@ -515,8 +639,18 @@
         "categoryFilter": "التخصص الأكاديمي",
         "allCategories": "كل التخصصات",
         "statusFilter": "حالة النشر",
-        "statusOptions": { "all": "كل الحالات", "active": "نشطة", "closed": "مغلقة" },
-        "columns": { "job": "المسمى الوظيفي", "company": "الشركة", "category": "التخصص الأكاديمي", "locationType": "الموقع / النوع", "status": "الحالة" },
+        "statusOptions": {
+          "all": "كل الحالات",
+          "active": "نشطة",
+          "closed": "مغلقة"
+        },
+        "columns": {
+          "job": "المسمى الوظيفي",
+          "company": "الشركة",
+          "category": "التخصص الأكاديمي",
+          "locationType": "الموقع / النوع",
+          "status": "الحالة"
+        },
         "companyUnknown": "الشركة غير محددة",
         "categoryUnknown": "التخصص غير محدد",
         "locationUnknown": "الموقع غير محدد",
@@ -547,6 +681,37 @@
         "emptyTitle": "لا توجد مسميات وظيفية موحدة",
         "emptyBody": "أنشئ مسمى أو غيّر البحث والتخصص المحدد."
       }
+    },
+    "payments": {
+      "title": "المدفوعات والاشتراكات",
+      "subtitle": "راجع المعاملات والإيرادات المدفوعة وحسابات Pro النشطة.",
+      "history": "سجل المدفوعات",
+      "subscriptions": "اشتراكات Pro النشطة",
+      "role": "نوع الحساب",
+      "name": "الحساب",
+      "plan": "الخطة",
+      "amount": "المبلغ",
+      "gateway": "بوابة الدفع",
+      "mode": "البيئة",
+      "status": "الحالة",
+      "date": "التاريخ",
+      "expires": "ينتهي",
+      "all": "كل الحالات",
+      "paid": "مدفوع",
+      "pending": "قيد الانتظار",
+      "failed": "فشل",
+      "demo": "تجريبي",
+      "live": "فعلي",
+      "test": "اختبار",
+      "unknown": "غير معروف",
+      "seeker": "باحث عن عمل",
+      "company": "شركة",
+      "allRoles": "كل الأدوار",
+      "empty": "لا توجد نتائج مطابقة.",
+      "error": "تعذّر تحميل معلومات المدفوعات.",
+      "revenue": "إجمالي المدفوعات",
+      "transactions": "معاملة",
+      "search": "ابحث باسم الحساب أو بريده"
     }
   },
   "dashboard": {

@@ -11,12 +11,12 @@ export default function FormField({ label, error, className = '', inputClassName
       <input
         {...inputProps}
         id={inputId}
-        className={`control-input ${error ? 'border-[#A37E5E]' : ''} ${inputClassName}`}
+        className={`control-input ${error ? 'border-[#B91C1C] focus:border-[#B91C1C]' : ''} ${inputClassName}`}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
         dir={inputProps.dir || 'auto'}
       />
-      {error && <p id={errorId} className="mt-1 text-xs text-[#1C221E]">{error}</p>}
+      {error && <p id={errorId} className="mt-1 text-xs text-[#B91C1C]">{error}</p>}
     </div>
   );
 }

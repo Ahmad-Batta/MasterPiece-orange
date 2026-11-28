@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useConfirm } from '../components/ConfirmProvider';
+import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Archive, BookOpen, BriefcaseBusiness, Check, CircleAlert, Edit3, LoaderCircle, Plus, RefreshCw, Search, Tags, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ import ModalShell from '../components/ModalShell';
 import PaginationBar from '../components/PaginationBar';
 import { getApiData, getApiItems } from '../utils/apiResponse';
 import { getValidationErrors } from '../utils/validationErrors';
+import { useAdminPreferences } from '../utils/adminPreferences';
 
 const inputClass = 'h-10 w-full rounded-lg border border-[#E5E2DC] bg-white px-4 text-sm text-[#1C221E] placeholder:text-[#7A827C] transition-colors duration-150 focus:border-[#A37E5E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]';
 const actionClass = 'inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[#E5E2DC] bg-white px-3 text-xs font-medium text-[#2B362E] transition-colors duration-150 hover:bg-[#FAF9F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
@@ -162,10 +164,13 @@ function StandardJobsList({ jobs, onEdit, onDelete, onCreate, page, lastPage, on
   return <div className="space-y-3">{jobs.map((job) => <article key={job.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E5E2DC] bg-white p-6"><div className="min-w-0 flex-1"><h2 className="text-sm font-semibold text-[#1C221E]" dir="auto">{job.title}</h2><p className="mt-1 text-xs text-[#4A544D]" dir="auto">{job.company || t('admin.catalog.jobs.companyUnknown')} · {job.category || t('admin.catalog.jobs.categoryUnknown')} · {job.location || t('admin.catalog.jobs.locationUnknown')} · {job.job_type || t('admin.catalog.jobs.typeUnknown')}</p><p className="mt-1 text-[10px] text-[#7A827C]">#{job.id}</p></div><div className="flex items-center gap-2"><button className={actionClass} type="button" onClick={() => onEdit(job)}><Edit3 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.edit')}</button><button className={actionClass} type="button" onClick={() => onDelete(job)}><Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.delete')}</button></div></article>)}<PaginationBar page={page} lastPage={lastPage} onChange={onPageChange} labels={{ page: (current, total) => t('admin.catalog.page', { current, total }), previous: t('admin.catalog.previous'), next: t('admin.catalog.next'), previousPage: t('admin.catalog.previousPage'), nextPage: t('admin.catalog.nextPage') }} /></div>;
 }
 
-export default function AdminCatalogJobsPage() {
+export default function AdminCatalogManagement({ mode = 'catalog' }) {
   const { t, i18n } = useTranslation();
   const { notify } = useToast();
-  const [tab, setTab] = useState('categories');
+  const confirm = useConfirm();
+  const preferences = useAdminPreferences();
+  const isJobsView = mode === 'jobs';
+  const [tab, setTab] = useState(isJobsView ? 'jobs' : 'categories');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [jobStatus, setJobStatus] = useState('all');
@@ -195,6 +200,10 @@ export default function AdminCatalogJobsPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
+  useEffect(() => {
+    setTab(isJobsView ? 'jobs' : 'categories');
+  }, [isJobsView]);
+
   useEffect(() => setPage(1), [tab, query, jobStatus, categoryFilter]);
 
   useEffect(() => {
@@ -206,23 +215,26 @@ export default function AdminCatalogJobsPage() {
         setCounts((current) => ({ ...current, categories: Number(payload.pagination?.total ?? getApiItems(payload).length) }));
       })
       .catch((error) => { if (error.code !== 'ERR_CANCELED') setCategoryOptions([]); });
-    api.get('/admin/users', { params: { role: 'company', per_page: 100 }, signal: controller.signal })
-      .then(({ data }) => {
-        if (!controller.signal.aborted) setCompanies(getApiItems(data?.data ?? {}).map((company) => ({ id: company.company_profile?.id ?? company.id, label: company.company_profile?.company_name || company.name })));
-      })
-      .catch((error) => { if (error.code !== 'ERR_CANCELED') setCompanies([]); });
-    api.get('/admin/jobs', { params: { per_page: 1 }, signal: controller.signal })
-      .then(({ data }) => {
-        if (!controller.signal.aborted) setCounts((current) => ({ ...current, standardJobs: Number(data?.data?.pagination?.total ?? 0) }));
-      })
-      .catch(() => {});
-    api.get('/admin/job-posts', { params: { per_page: 1 }, signal: controller.signal })
-      .then(({ data }) => {
-        if (!controller.signal.aborted) setCounts((current) => ({ ...current, jobs: Number(data?.data?.pagination?.total ?? 0) }));
-      })
-      .catch(() => {});
+    if (!isJobsView) {
+      api.get('/admin/users', { params: { role: 'company', per_page: 100 }, signal: controller.signal })
+        .then(({ data }) => {
+          if (!controller.signal.aborted) setCompanies(getApiItems(data?.data ?? {}).map((company) => ({ id: company.company_profile?.id ?? company.id, label: company.company_profile?.company_name || company.name })));
+        })
+        .catch((error) => { if (error.code !== 'ERR_CANCELED') setCompanies([]); });
+      api.get('/admin/jobs', { params: { per_page: 1 }, signal: controller.signal })
+        .then(({ data }) => {
+          if (!controller.signal.aborted) setCounts((current) => ({ ...current, standardJobs: Number(data?.data?.pagination?.total ?? 0) }));
+        })
+        .catch(() => {});
+    } else {
+      api.get('/admin/job-posts', { params: { per_page: 1 }, signal: controller.signal })
+        .then(({ data }) => {
+          if (!controller.signal.aborted) setCounts((current) => ({ ...current, jobs: Number(data?.data?.pagination?.total ?? 0) }));
+        })
+        .catch(() => {});
+    }
     return () => controller.abort();
-  }, [loadAttempt]);
+  }, [loadAttempt, isJobsView]);
 
   const loadActiveList = useCallback(async (signal) => {
     setIsLoading(true);
@@ -243,24 +255,6 @@ export default function AdminCatalogJobsPage() {
       if (categoryFilter !== 'all') params.category_id = categoryFilter;
     }
     try {
-      if (tab === 'jobs' && query) {
-        const firstResponse = await api.get(endpoint, { params: { ...params, page: 1 }, signal });
-        const firstPayload = firstResponse.data?.data ?? {};
-        const allItems = getApiItems(firstPayload);
-        const totalPages = Number(firstPayload.pagination?.last_page ?? 1);
-        for (let start = 2; start <= totalPages; start += 10) {
-          const pageNumbers = Array.from({ length: Math.min(10, totalPages - start + 1) }, (_, index) => start + index);
-          const responses = await Promise.all(pageNumbers.map((currentPage) => api.get(endpoint, { params: { ...params, page: currentPage }, signal })));
-          allItems.push(...responses.flatMap((response) => getApiItems(response.data?.data ?? {})));
-        }
-        const normalizedQuery = query.toLocaleLowerCase();
-        const matches = allItems.filter((job) => `${job.title || ''} ${job.company?.name || job.company_name || ''}`.toLocaleLowerCase().includes(normalizedQuery));
-        if (signal?.aborted) return;
-        setJobPosts(matches);
-        setCounts((current) => ({ ...current, jobs: matches.length }));
-        setLastPage(Math.max(1, Math.ceil(matches.length / 100)));
-        return;
-      }
       const { data } = await api.get(endpoint, { params, signal });
       const payload = data?.data ?? {};
       const items = getApiItems(payload);
@@ -280,7 +274,7 @@ export default function AdminCatalogJobsPage() {
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [tab, query, jobStatus, categoryFilter, page]);
+  }, [tab, query, jobStatus, categoryFilter, page, mode]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -294,11 +288,7 @@ export default function AdminCatalogJobsPage() {
     return () => window.clearTimeout(timer);
   }, [feedback]);
 
-  const visibleJobs = useMemo(() => {
-    if (!query) return jobPosts;
-    const pageStart = (page - 1) * 100;
-    return jobPosts.slice(pageStart, pageStart + 100);
-  }, [jobPosts, page, query]);
+  const visibleJobs = jobPosts;
 
   const openCreateModal = () => { setEditingCategory(null); setCategoryErrors({}); setModalMode('create'); };
   const openEditModal = (category) => { setEditingCategory(category); setCategoryErrors({}); setModalMode('edit'); };
@@ -334,7 +324,7 @@ export default function AdminCatalogJobsPage() {
   };
 
   const deleteCategory = async (category) => {
-    if (!window.confirm(t('admin.catalog.categories.deleteConfirm', { name: category.category_name }))) return;
+    if (!await confirm(t('admin.catalog.categories.deleteConfirm', { name: category.category_name }))) return;
     try {
       await api.delete(`/admin/categories/${category.id}`);
       setCategories((current) => current.filter((item) => String(item.id) !== String(category.id)));
@@ -384,7 +374,7 @@ export default function AdminCatalogJobsPage() {
   };
 
   const deleteStandardJob = async (job) => {
-    if (!window.confirm(t('admin.catalog.standardJobs.deleteConfirm', { title: job.title }))) return;
+    if (!await confirm(t('admin.catalog.standardJobs.deleteConfirm', { title: job.title }))) return;
     try {
       await api.delete(`/admin/jobs/${job.id}`);
       setStandardJobs((current) => current.filter((item) => String(item.id) !== String(job.id)));
@@ -421,7 +411,7 @@ export default function AdminCatalogJobsPage() {
   };
 
   const removeJob = async (job) => {
-    if (!window.confirm(t('admin.catalog.jobs.deleteConfirm', { title: job.title }))) return;
+    if (!await confirm(t('admin.catalog.jobs.deleteConfirm', { title: job.title }))) return;
     setBusyJobId(job.id);
     try {
       const { data } = await api.delete(`/admin/job-posts/${job.id}`);
@@ -450,16 +440,16 @@ export default function AdminCatalogJobsPage() {
   return (
     <section className="space-y-6" aria-labelledby="admin-catalog-title">
       <header className="rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-sm">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-[#A37E5E]">{t('admin.catalog.eyebrow')}</p>
-        <h1 id="admin-catalog-title" className="text-xl font-semibold text-[#1C221E] sm:text-2xl">{t('admin.catalog.title')}</h1>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-[#4A544D]">{t('admin.catalog.subtitle')}</p>
+        <p className="mb-2 text-xs font-semibold tracking-wide text-[#A37E5E]">{t(isJobsView ? 'admin.jobs.eyebrow' : 'admin.catalog.eyebrow')}</p>
+        <h1 id="admin-catalog-title" className="text-xl font-semibold text-[#1C221E] sm:text-2xl">{t(isJobsView ? 'admin.jobs.title' : 'admin.catalog.title')}</h1>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-[#4A544D]">{t(isJobsView ? 'admin.jobs.subtitle' : 'admin.catalog.subtitle')}</p>
       </header>
 
       <AnimatePresence initial={false}>{feedback && <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }} className="flex items-center gap-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-4 text-sm text-[#15803D]" role="status" aria-live="polite"><Check className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />{feedback}<button className="ms-auto inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" type="button" onClick={() => setFeedback('')} aria-label={t('common.close')}><X className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" /></button></motion.div>}</AnimatePresence>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-2" role="tablist" aria-label={t('admin.catalog.tabs.label')}>
-        {['categories', 'standardJobs', 'jobs'].map((target) => <button key={target} type="button" role="tab" aria-selected={tab === target} aria-controls="admin-catalog-panel" onClick={() => setTab(target)} className={`inline-flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-3 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 sm:px-4 ${tab === target ? 'bg-[#2B362E] text-white' : 'text-[#4A544D] hover:bg-white'}`}><span>{t(`admin.catalog.tabs.${target}`)}</span><span className={`tabular-nums rounded-full px-2 py-0.5 text-[10px] ${tab === target ? 'bg-white/15 text-white' : 'bg-[#E5E2DC] text-[#4A544D]'}`}>{formatCount(counts[target])}</span></button>)}
-      </div>
+      {!isJobsView && <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-2" role="tablist" aria-label={t('admin.catalog.tabs.label')}>
+        {['categories', 'standardJobs'].map((target) => <button key={target} id={`admin-catalog-tab-${target}`} type="button" role="tab" aria-selected={tab === target} aria-controls="admin-catalog-panel" onClick={() => setTab(target)} className={`inline-flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-3 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2 sm:px-4 ${tab === target ? 'bg-[#2B362E] text-white' : 'text-[#4A544D] hover:bg-white'}`}><span>{t(`admin.catalog.tabs.${target}`)}</span><span className={`tabular-nums rounded-full px-2 py-0.5 text-[10px] ${tab === target ? 'bg-white/15 text-white' : 'bg-[#E5E2DC] text-[#4A544D]'}`}>{formatCount(counts[target])}</span></button>)}
+      </div>}
 
       <div className="rounded-xl border border-[#E5E2DC] bg-white p-6 shadow-sm">
         <div className={`grid gap-4 ${tab === 'jobs' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
@@ -476,8 +466,8 @@ export default function AdminCatalogJobsPage() {
           {tab === 'standardJobs' && <button className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#2B362E] px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#1F2822] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E] focus-visible:ring-offset-2" type="button" onClick={() => openEntityModal('standardJob', 'create')}><Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('admin.catalog.standardJobs.add')}</button>}
         </div>
 
-        <div id="admin-catalog-panel" role="tabpanel" aria-busy={isLoading} className="mt-5">
-          {isLoading ? <LoadingRows /> : loadError ? <div className="flex flex-col items-center gap-3 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-8 text-center" role="alert"><CircleAlert className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" /><p className="text-sm text-[#4A544D]">{t('admin.catalog.loadError')}</p><button className={`${actionClass} bg-[#2B362E] text-white hover:bg-[#1F2822]`} type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>{t('admin.catalog.retry')}</button></div> : tab === 'categories' ? categories.length === 0 ? <div className="flex flex-col items-center gap-3 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-8 text-center"><Tags className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" /><h2 className="text-sm font-semibold text-[#2B362E]">{t('admin.catalog.categories.emptyTitle')}</h2><p className="max-w-prose text-xs leading-relaxed text-[#4A544D]">{t('admin.catalog.categories.emptyBody')}</p><button className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#2B362E] px-4 text-sm font-medium text-white transition-colors hover:bg-[#1F2822] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" type="button" onClick={openCreateModal}><Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('admin.catalog.categories.add')}</button></div> : <div className="space-y-3">{categories.map((category) => <article key={category.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E5E2DC] bg-white p-6"><div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FAF9F5] text-[#2B362E]"><BookOpen className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" /></span><div><h2 className="text-sm font-semibold text-[#1C221E]" dir="auto">{category.category_name}</h2><p className="mt-1 text-xs text-[#7A827C]">{t('admin.catalog.categories.identifier', { id: category.id })}</p></div></div><div className="flex items-center gap-2"><button className={actionClass} type="button" onClick={() => openEditModal(category)}>{t('common.edit')}</button><button className={actionClass} type="button" onClick={() => deleteCategory(category)}><Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.delete')}</button></div></article>)}<PaginationBar page={page} lastPage={lastPage} onChange={setPage} labels={{ page: (current, total) => t('admin.catalog.page', { current, total }), previous: t('admin.catalog.previous'), next: t('admin.catalog.next'), previousPage: t('admin.catalog.previousPage'), nextPage: t('admin.catalog.nextPage') }} /></div> : tab === 'standardJobs' ? <StandardJobsList jobs={standardJobs} onCreate={() => openEntityModal('standardJob', 'create')} onEdit={(job) => openEntityModal('standardJob', 'edit', job)} onDelete={deleteStandardJob} page={page} lastPage={lastPage} onPageChange={setPage} t={t} /> : visibleJobs.length === 0 ? <div className="flex flex-col items-center gap-3 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-8 text-center"><BriefcaseBusiness className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" /><h2 className="text-sm font-semibold text-[#2B362E]">{t('admin.catalog.jobs.emptyTitle')}</h2><p className="max-w-prose text-xs leading-relaxed text-[#4A544D]">{t('admin.catalog.jobs.emptyBody')}</p><button className={`${actionClass} bg-[#2B362E] text-white hover:bg-[#1F2822]`} type="button" onClick={() => { setSearch(''); setCategoryFilter('all'); setJobStatus('all'); setLoadAttempt((attempt) => attempt + 1); }}><RefreshCw className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('admin.catalog.retry')}</button></div> : <><div className="overflow-x-auto rounded-xl border border-[#E5E2DC]"><table className="w-full min-w-[840px] border-collapse text-start"><thead className="bg-[#FAF9F5] text-xs text-[#4A544D]"><tr><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.job')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.company')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.category')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.locationType')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.status')}</th><th className="px-4 py-3 text-start font-semibold">{t('common.actions')}</th></tr></thead><tbody className="divide-y divide-[#E5E2DC]">{visibleJobs.map((job) => { const isBusy = String(busyJobId) === String(job.id); return <tr key={job.id}><td className="px-4 py-4"><p className="max-w-56 truncate text-sm font-semibold text-[#1C221E]" dir="auto">{job.title}</p><p className="mt-1 text-xs text-[#7A827C]">#{job.id}</p></td><td className="px-4 py-4 text-sm text-[#4A544D]" dir="auto">{job.company?.name || job.company_name || t('admin.catalog.jobs.companyUnknown')}</td><td className="px-4 py-4"><span className="whitespace-nowrap rounded-full border border-[#E5E2DC] bg-[#FAF9F5] px-2.5 py-1 text-[10px] font-medium text-[#2B362E]">{job.category || t('admin.catalog.jobs.categoryUnknown')}</span></td><td className="px-4 py-4 text-xs text-[#4A544D]" dir="auto"><span className="block">{job.location || t('admin.catalog.jobs.locationUnknown')}</span><span className="mt-1 block text-[#7A827C]">{job.job_type || t('admin.catalog.jobs.typeUnknown')}</span></td><td className="px-4 py-4"><StatusPill status={job.status} t={t} /></td><td className="px-4 py-4"><div className="flex flex-wrap gap-2"><button className={actionClass} type="button" onClick={() => openEntityModal('jobPost', 'edit', job)} disabled={isBusy}><Edit3 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.edit')}</button><button className={actionClass} type="button" onClick={() => toggleJobStatus(job)} disabled={isBusy}>{isBusy ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.75} aria-hidden="true" /> : <Archive className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}{t(job.status === 'active' ? 'admin.catalog.jobs.closeAction' : 'admin.catalog.jobs.openAction')}</button><button className={actionClass} type="button" onClick={() => removeJob(job)} disabled={isBusy}><Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.delete')}</button></div></td></tr>; })}</tbody></table></div><div className="mt-4"><PaginationBar page={page} lastPage={lastPage} onChange={setPage} labels={{ page: (current, total) => t('admin.catalog.page', { current, total }), previous: t('admin.catalog.previous'), next: t('admin.catalog.next'), previousPage: t('admin.catalog.previousPage'), nextPage: t('admin.catalog.nextPage') }} /></div></>}
+        <div id="admin-catalog-panel" role={isJobsView ? 'region' : 'tabpanel'} aria-labelledby={isJobsView ? undefined : `admin-catalog-tab-${tab}`} aria-busy={isLoading} className="mt-5">
+          {isLoading ? <LoadingRows /> : loadError ? <div className="flex flex-col items-center gap-3 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-8 text-center" role="alert"><CircleAlert className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" /><p className="text-sm text-[#4A544D]">{t('admin.catalog.loadError')}</p><button className={`${actionClass} bg-[#2B362E] text-white hover:bg-[#1F2822]`} type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>{t('admin.catalog.retry')}</button></div> : tab === 'categories' ? categories.length === 0 ? <div className="flex flex-col items-center gap-3 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-8 text-center"><Tags className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" /><h2 className="text-sm font-semibold text-[#2B362E]">{t('admin.catalog.categories.emptyTitle')}</h2><p className="max-w-prose text-xs leading-relaxed text-[#4A544D]">{t('admin.catalog.categories.emptyBody')}</p><button className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#2B362E] px-4 text-sm font-medium text-white transition-colors hover:bg-[#1F2822] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" type="button" onClick={openCreateModal}><Plus className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('admin.catalog.categories.add')}</button></div> : <div className="space-y-3">{categories.map((category) => <article key={category.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E5E2DC] bg-white p-6"><div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FAF9F5] text-[#2B362E]"><BookOpen className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" /></span><div><h2 className="text-sm font-semibold text-[#1C221E]" dir="auto">{category.category_name}</h2><p className="mt-1 text-xs text-[#7A827C]">{t('admin.catalog.categories.identifier', { id: category.id })}</p></div></div><div className="flex items-center gap-2"><button className={actionClass} type="button" onClick={() => openEditModal(category)}>{t('common.edit')}</button><button className={actionClass} type="button" onClick={() => deleteCategory(category)}><Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.delete')}</button></div></article>)}<PaginationBar page={page} lastPage={lastPage} onChange={setPage} labels={{ page: (current, total) => t('admin.catalog.page', { current, total }), previous: t('admin.catalog.previous'), next: t('admin.catalog.next'), previousPage: t('admin.catalog.previousPage'), nextPage: t('admin.catalog.nextPage') }} /></div> : tab === 'standardJobs' ? <StandardJobsList jobs={standardJobs} onCreate={() => openEntityModal('standardJob', 'create')} onEdit={(job) => openEntityModal('standardJob', 'edit', job)} onDelete={deleteStandardJob} page={page} lastPage={lastPage} onPageChange={setPage} t={t} /> : visibleJobs.length === 0 ? <div className="flex flex-col items-center gap-3 rounded-xl border border-[#E5E2DC] bg-[#FAF9F5] p-8 text-center"><BriefcaseBusiness className="h-6 w-6 text-[#A37E5E]" strokeWidth={1.75} aria-hidden="true" /><h2 className="text-sm font-semibold text-[#2B362E]">{t('admin.catalog.jobs.emptyTitle')}</h2><p className="max-w-prose text-xs leading-relaxed text-[#4A544D]">{t('admin.catalog.jobs.emptyBody')}</p><button className={`${actionClass} bg-[#2B362E] text-white hover:bg-[#1F2822]`} type="button" onClick={() => { setSearch(''); setCategoryFilter('all'); setJobStatus('all'); setLoadAttempt((attempt) => attempt + 1); }}><RefreshCw className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('admin.catalog.retry')}</button></div> : <><div className="overflow-x-auto rounded-xl border border-[#E5E2DC]"><table className={`w-full min-w-[840px] border-collapse text-start ${preferences.tableDensity === 'compact' ? '[&_td]:py-2' : '[&_td]:py-4'}`}><thead className="bg-[#FAF9F5] text-xs text-[#4A544D]"><tr><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.job')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.company')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.category')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.locationType')}</th><th className="px-4 py-3 text-start font-semibold">{t('admin.catalog.jobs.columns.status')}</th><th className="px-4 py-3 text-start font-semibold">{t('common.actions')}</th></tr></thead><tbody className="divide-y divide-[#E5E2DC]">{visibleJobs.map((job) => { const isBusy = String(busyJobId) === String(job.id); return <tr key={job.id}><td className="px-4 py-4"><p className="max-w-56 truncate text-sm font-semibold text-[#1C221E]" dir="auto">{job.title}</p><p className="mt-1 text-xs text-[#7A827C]">#{job.id}</p></td><td className="px-4 py-4 text-sm text-[#4A544D]" dir="auto">{job.company?.name || job.company_name || t('admin.catalog.jobs.companyUnknown')}</td><td className="px-4 py-4"><span className="whitespace-nowrap rounded-full border border-[#E5E2DC] bg-[#FAF9F5] px-2.5 py-1 text-[10px] font-medium text-[#2B362E]">{job.category || t('admin.catalog.jobs.categoryUnknown')}</span></td><td className="px-4 py-4 text-xs text-[#4A544D]" dir="auto"><span className="block">{job.location || t('admin.catalog.jobs.locationUnknown')}</span><span className="mt-1 block text-[#7A827C]">{job.job_type || t('admin.catalog.jobs.typeUnknown')}</span></td><td className="px-4 py-4"><StatusPill status={job.status} t={t} /></td><td className="px-4 py-4"><div className="flex flex-wrap gap-2"><button className={actionClass} type="button" onClick={() => openEntityModal('jobPost', 'edit', job)} disabled={isBusy}><Edit3 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.edit')}</button><button className={actionClass} type="button" onClick={() => toggleJobStatus(job)} disabled={isBusy}>{isBusy ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.75} aria-hidden="true" /> : <Archive className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />}{t(job.status === 'active' ? 'admin.catalog.jobs.closeAction' : 'admin.catalog.jobs.openAction')}</button><button className={actionClass} type="button" onClick={() => removeJob(job)} disabled={isBusy}><Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />{t('common.delete')}</button></div></td></tr>; })}</tbody></table></div><div className="mt-4"><PaginationBar page={page} lastPage={lastPage} onChange={setPage} labels={{ page: (current, total) => t('admin.catalog.page', { current, total }), previous: t('admin.catalog.previous'), next: t('admin.catalog.next'), previousPage: t('admin.catalog.previousPage'), nextPage: t('admin.catalog.nextPage') }} /></div></>}
         </div>
       </div>
 

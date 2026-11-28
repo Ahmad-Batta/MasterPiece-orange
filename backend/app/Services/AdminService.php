@@ -12,8 +12,10 @@ use App\Models\MatchingJob;
 use App\Models\Payment;
 use App\Models\Seeker;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AdminService
 {
@@ -32,6 +34,8 @@ class AdminService
             'average_ai_match_score' => round((float) $averageMatch, 2),
             'total_revenue' => number_format((float) Payment::query()->where('status', 'paid')->sum('amount'), 2, '.', ''),
             'recent_activities' => $this->recentActivities(),
+            'activity_daily' => $this->dailyActivity(),
+            'activity_timezone' => config('app.timezone'),
             'jobs_by_category' => Category::query()->withCount(['jobPosts as jobs_count' => fn ($query) => $query->where('status', 'active')])
                 ->orderBy('category_name')->get(['category_id', 'category_name'])
                 ->map(fn (Category $category): array => ['category_id' => $category->category_id, 'category' => $category->category_name, 'count' => (int) $category->jobs_count])->all(),
@@ -75,39 +79,73 @@ class AdminService
         return $company->fresh();
     }
 
+    private function accountsQuery(?string $role = null): Builder
+    {
+        $grammar = DB::connection()->getQueryGrammar();
+        $first = $grammar->wrap('first name');
+        $last = $grammar->wrap('last name');
+        $seekerName = DB::getDriverName() === 'sqlite' ? "TRIM($first || ' ' || $last)" : "TRIM(CONCAT($first, ' ', $last))";
+        $queries = [
+            'admin' => DB::table('admin')->selectRaw("admin_id AS id, username AS name, email, 'admin' AS role, is_active, ".$grammar->wrap('created at')." AS created_at, NULL AS industry, NULL AS verification_status, 'free' AS plan, NULL AS plan_expires_at"),
+            'seeker' => DB::table('seeker')->selectRaw("seeker_id AS id, $seekerName AS name, email, 'seeker' AS role, is_active, ".$grammar->wrap('created at').' AS created_at, NULL AS industry, NULL AS verification_status, plan, plan_expires_at'),
+            'company' => DB::table('companies')->selectRaw("company_id AS id, company_name AS name, email, 'company' AS role, is_active, created_at, industry, verification_status, plan, plan_expires_at"),
+        ];
+        if ($role) {
+            return DB::query()->fromSub($queries[$role], 'accounts');
+        }
+
+        return DB::query()->fromSub($queries['admin']->unionAll($queries['seeker'])->unionAll($queries['company']), 'accounts');
+    }
+
     public function users(array $filters = []): LengthAwarePaginator
     {
-        $rows = collect();
-        if (! isset($filters['role']) || $filters['role'] === 'admin') {
-            $rows = $rows->merge(Admin::query()->get(['admin_id', 'username', 'email', 'role', 'is_active'])->map(fn (Admin $u) => ['id' => $u->admin_id, 'name' => $u->username, 'email' => $u->email, 'role' => 'admin', 'is_active' => (bool) $u->is_active, 'created_at' => $u->{'created at'}]));
-        }
-        if (! isset($filters['role']) || $filters['role'] === 'seeker') {
-            $rows = $rows->merge(Seeker::query()->get(['seeker_id', 'first name', 'last name', 'email', 'is_active', 'created at'])->map(fn (Seeker $u) => ['id' => $u->seeker_id, 'name' => trim($u->{'first name'}.' '.$u->{'last name'}), 'email' => $u->email, 'role' => 'seeker', 'is_active' => (bool) $u->is_active, 'created_at' => $u->{'created at'}]));
-        }
-        if (! isset($filters['role']) || $filters['role'] === 'company') {
-            $rows = $rows->merge(Company::query()->get(['company_id', 'company_name', 'email', 'industry', 'verification_status', 'is_active', 'created_at'])->map(fn (Company $u) => [
-                'id' => $u->company_id,
-                'name' => $u->company_name,
-                'email' => $u->email,
-                'role' => 'company',
-                'is_active' => (bool) $u->is_active,
-                'created_at' => $u->created_at,
-                'company_profile' => [
-                    'id' => $u->company_id,
-                    'company_name' => $u->company_name,
-                    'industry' => $u->industry,
-                    'verification_status' => $u->verification_status,
-                ],
-            ]));
-        }
-        $rows = $rows->filter(function (array $row) use ($filters): bool {
-            $searchMatches = empty($filters['search']) || str_contains(mb_strtolower($row['name'].' '.$row['email']), mb_strtolower($filters['search']));
-            $statusMatches = ! isset($filters['status']) || (string) (int) $row['is_active'] === (string) $filters['status'];
+        $page = $this->accountsQuery($filters['role'] ?? null)
+            ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('name', 'like', '%'.$v.'%')->orWhere('email', 'like', '%'.$v.'%')))
+            ->when(isset($filters['status']), fn ($q) => $q->where('is_active', (int) $filters['status']))
+            ->when($filters['verification_status'] ?? null, fn ($q, $v) => $q->where('verification_status', $v))
+            ->orderByDesc('created_at')->orderBy('role')->orderByDesc('id')->paginate($filters['per_page'] ?? 25);
+        $page->setCollection($page->getCollection()->map(function ($row): array {
+            $result = (array) $row;
+            $result['is_active'] = (bool) $row->is_active;
+            if ($row->role === 'company') {
+                $result['company_profile'] = ['id' => $row->id, 'company_name' => $row->name, 'industry' => $row->industry, 'verification_status' => $row->verification_status];
+            }
 
-            return $searchMatches && $statusMatches;
-        })->sortByDesc(fn (array $row) => $row['created_at']?->timestamp ?? 0)->values();
+            return $result;
+        }));
 
-        return $this->paginateCollection($rows, $filters['per_page'] ?? 25);
+        return $page;
+    }
+
+    public function subscriptions(array $filters = []): LengthAwarePaginator
+    {
+        return $this->accountsQuery($filters['role'] ?? null)->whereIn('role', ['seeker', 'company'])
+            ->where('plan', 'pro')->where('plan_expires_at', '>', now())
+            ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('name', 'like', '%'.$v.'%')->orWhere('email', 'like', '%'.$v.'%')))
+            ->orderBy('plan_expires_at')->orderBy('role')->orderBy('id')->paginate($filters['per_page'] ?? 25);
+    }
+
+    private function dailyActivity(): array
+    {
+        $start = now()->startOfDay()->subDays(6);
+        $end = now();
+        $series = [];
+        foreach ([['seeker', 'created at', 'seekers'], ['companies', 'created_at', 'companies'], ['job_posts', 'created_at', 'jobs'], ['applications', 'applied_at', 'applications']] as [$table, $column, $key]) {
+            $date = 'DATE('.DB::connection()->getQueryGrammar()->wrap($column).')';
+            $series[$key] = DB::table($table)->whereBetween($column, [$start, $end])
+                ->selectRaw($date.' AS day, COUNT(*) AS total')->groupByRaw($date)->pluck('total', 'day');
+        }
+
+        return collect(range(0, 6))->map(function ($offset) use ($start, $series): array {
+            $date = $start->copy()->addDays($offset)->toDateString();
+            $row = ['date' => $date];
+            foreach ($series as $key => $counts) {
+                $row[$key] = (int) ($counts[$date] ?? 0);
+            }
+            $row['events'] = $row['seekers'] + $row['companies'] + $row['jobs'] + $row['applications'];
+
+            return $row;
+        })->all();
     }
 
     public function categories(array $filters = []): LengthAwarePaginator
@@ -125,28 +163,40 @@ class AdminService
             ->orderByDesc('created_at')->paginate($filters['per_page'] ?? 25);
     }
 
-    public function deactivateUser(string $role, int $id): Model
+    public function updateAccount(Model $account, array $updates, Admin $actor): Model
     {
-        $model = match ($role) {
-            'admin' => Admin::class,
-            'seeker' => Seeker::class,
-            'company' => Company::class,
-            default => null,
-        };
+        return DB::transaction(function () use ($account, $updates, $actor): Model {
+            if ($account instanceof Admin && array_key_exists('is_active', $updates) && ! $updates['is_active']) {
+                // Lock in primary-key order so concurrent actions cannot disable every administrator.
+                $admins = Admin::query()->orderBy('admin_id')->lockForUpdate()->get(['admin_id', 'is_active']);
+                if ($account->getKey() === $actor->getKey()) {
+                    throw ValidationException::withMessages(['status' => ['You cannot deactivate your own administrator account.']]);
+                }
+                if ($admins->where('is_active', true)->count() <= 1 && $admins->firstWhere('admin_id', $account->getKey())?->is_active) {
+                    throw ValidationException::withMessages(['status' => ['The last active administrator cannot be deactivated.']]);
+                }
+            }
+            $account->forceFill($updates)->save();
+            if (array_key_exists('is_active', $updates) && ! $updates['is_active']) {
+                $account->tokens()->delete();
+            }
 
+            return $account->fresh();
+        });
+    }
+
+    public function deactivateUser(string $role, int $id, Admin $actor): Model
+    {
+        $model = ['admin' => Admin::class, 'seeker' => Seeker::class, 'company' => Company::class][$role] ?? null;
         abort_unless($model, 404);
 
-        /** @var Model $user */
-        $user = $model::query()->findOrFail($id);
-        $user->forceFill(['is_active' => false])->save();
-
-        return $user;
+        return $this->updateAccount($model::query()->findOrFail($id), ['is_active' => false], $actor);
     }
 
     public function jobPosts(array $filters = []): LengthAwarePaginator
     {
         return JobPost::query()->with(['company', 'category', 'job.category'])
-            ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('title', 'like', '%'.$v.'%')->orWhere('content', 'like', '%'.$v.'%')))
+            ->when($filters['search'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('title', 'like', '%'.$v.'%')->orWhere('content', 'like', '%'.$v.'%')->orWhereHas('company', fn ($company) => $company->where('company_name', 'like', '%'.$v.'%'))))
             ->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v))
             ->when($filters['category_id'] ?? null, fn ($q, $v) => $q->where(fn ($sub) => $sub->where('category_id', $v)->orWhereHas('job', fn ($job) => $job->where('category_id', $v))))
             ->orderByDesc('created_at')->paginate($filters['per_page'] ?? 25);
@@ -172,13 +222,6 @@ class AdminService
         }
 
         return $post->fresh(['company', 'category', 'job.category']);
-    }
-
-    private function paginateCollection(Collection $rows, int $perPage): LengthAwarePaginator
-    {
-        $page = LengthAwarePaginator::resolveCurrentPage();
-
-        return new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => LengthAwarePaginator::resolveCurrentPath()]);
     }
 
     public function removeJobPost(int $id): array

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowUpRight, Github, Instagram, Linkedin, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { usePlatformConfig } from '../context/PlatformConfigContext';
 
 const navigationGroups = [
   {
@@ -58,6 +59,7 @@ function FooterNavigationLink({ href, children }) {
 }
 
 export default function Footer() {
+  const platformConfig = usePlatformConfig();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -91,7 +93,7 @@ export default function Footer() {
                 <h2 id={`footer-${id}`} className="mb-2 text-xs font-semibold text-[#2B362E]">{t(`footer.groups.${id}`)}</h2>
                 <ul className="space-y-1">
                   {links.map(({ key, href }) => (
-                    <li key={key}><FooterNavigationLink href={href}>{t(`footer.links.${key}`)}</FooterNavigationLink></li>
+                    <li key={key}><FooterNavigationLink href={key === 'privacyTerms' ? `mailto:${platformConfig.support_email}?subject=Privacy%20and%20Terms` : href}>{t(`footer.links.${key}`)}</FooterNavigationLink></li>
                   ))}
                 </ul>
               </section>
@@ -116,8 +118,8 @@ export default function Footer() {
               <button className="button-primary h-10 w-full px-4 text-xs" type="submit">{t(subscribed ? 'footer.subscribed' : 'footer.subscribe')}</button>
               <p className="min-h-4 text-xs text-[#2B362E]" role="status" aria-live="polite">{subscribed ? t('footer.subscribeConfirmation') : ''}</p>
             </form>
-            <a className="mt-2 inline-flex items-center gap-2 text-xs text-[#2B362E] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" href={`mailto:${t('footer.supportEmail')}`}>
-              <Mail className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />{t('footer.supportEmail')}
+            <a className="mt-2 inline-flex items-center gap-2 text-xs text-[#2B362E] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A37E5E]" href={`mailto:${platformConfig.support_email}`}>
+              <Mail className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />{platformConfig.support_email}
             </a>
           </section>
         </div>

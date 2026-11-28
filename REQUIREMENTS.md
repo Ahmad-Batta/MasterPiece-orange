@@ -35,6 +35,8 @@ Eloquent models explicitly map the existing non-standard table names, primary ke
 
 ## 4. Functional Requirements
 
+Admin operations additionally use a singleton `platform_settings` table for support contact, per-role default free AI uses, company verification mode, and bilingual maintenance messages. These settings apply to new accounts and verification requests without rewriting existing account balances. The admin API also exposes seven days of real activity counts, SQL-filtered/paginated lists, account detail records for editing, paid transaction totals by currency and payment mode, and currently active Pro subscriptions. Administrator self-deactivation and removal of the last active administrator are blocked.
+
 ### 4.1 Authentication & Access Control (`AuthenticationManager`)
 - **Unified Single Login Page:** Provide **one single unified `/login` page** for all user types (`Seeker`, `Company`, and `Admin`) requiring only `email` and `password` (plus optional Google OAuth), with no role selector on the login screen.
 - **Automatic Role Detection & Redirection:** On `POST /api/login`, `AuthenticationManager` checks credentials across `admin`, `seeker`, and `companies` tables, verifies the BCrypt password, issues a role-scoped Sanctum token, and returns `{ status, data: { token, role, user } }`. The React frontend automatically redirects the user to the appropriate dashboard (`/seeker/dashboard`, `/company/dashboard`, or `/admin/dashboard`) based on `role`.
